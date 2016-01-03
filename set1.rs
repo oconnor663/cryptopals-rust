@@ -30,7 +30,7 @@ fn to_base64(bytes: &[u8]) -> String {
         }
     }
     // Handle any extra bits at the end.
-    let empty_bits = 6 - accumulated_bits;
+    let empty_bits = if accumulated_bits > 0 {6 - accumulated_bits} else {0};
     accumulator <<= empty_bits;
     ret.push(BASE64_ALPHABET[accumulator] as char);
     for _ in 0..(empty_bits/2) {

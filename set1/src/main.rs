@@ -59,17 +59,14 @@ fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
 }
 
 fn wikipedia_str() -> String {
-    let mut f = File::open("rust_wikipedia.txt").unwrap();
+    let mut f = File::open("input/rust_wikipedia.txt").unwrap();
     let mut s = String::new();
     f.read_to_string(&mut s).unwrap();
     s
 }
 
-fn counts(s: &str) -> HashMap<char, u32> {
+fn make_counts(s: &str) -> HashMap<char, u32> {
     let mut counts = HashMap::new();
-    let mut f = File::open("rust_wikipedia.txt").unwrap();
-    let mut s = String::new();
-    f.read_to_string(&mut s).unwrap();
     for c in s.chars() {
         let counter = counts.entry(c).or_insert(0);
         *counter += 1;
@@ -77,16 +74,22 @@ fn counts(s: &str) -> HashMap<char, u32> {
     counts
 }
 
-fn frequencies(counts: &HashMap<char, u32>) -> HashMap<char, f32> {
+fn make_frequencies(s: &str) -> HashMap<char, f32> {
+    let counts = make_counts(s);
     let mut frequencies = HashMap::new();
     let total: u32 = counts.values().fold(0, |x, y| x+y);
-    for (&c, &count) in counts {
+    for (c, count) in counts {
         frequencies.insert(c, count as f32 / total as f32);
     }
     frequencies
 }
 
-fn score(
+fn score(s: &str, reference: &HashMap<char, f32>) -> f32 {
+    let frequencies = make_frequencies(s);
+    frequencies.keys()
+        .map(|c| frequencies[c] * reference[c])
+        .fold(0f32, |x, y| x + y)
+}
 
 fn main() {
     let input = b"49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -99,4 +102,15 @@ fn main() {
     let xor_right = [2, 2, 2, 2];
     let xor_result = xor(&xor_left, &xor_right);
     println!("xor result: {:?}", xor_result);
+
+    let bad_english = "qqqqqqqqqq";
+    let good_english = "eeeeeeeeeeee";
+    let great_english = wikipedia_str();
+    let reference = make_frequencies(&great_english);
+    println!("bad {}", score(bad_english, &reference));
+    println!("good {}", score(good_english, &reference));
+    println!("great {}", score(&great_english, &reference));
+    let freq = make_frequencies(&great_english);
+    println!("{:?}", make_frequencies(&great_english));
+    println!("{}", freq.values().fold(0f32, |x, y| x + y));
 }

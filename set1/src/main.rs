@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::io::prelude::*;
+use std::fs::File;
+
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
 const BASE64_ALPHABET: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
@@ -53,6 +57,36 @@ fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
     }
     ret
 }
+
+fn wikipedia_str() -> String {
+    let mut f = File::open("rust_wikipedia.txt").unwrap();
+    let mut s = String::new();
+    f.read_to_string(&mut s).unwrap();
+    s
+}
+
+fn counts(s: &str) -> HashMap<char, u32> {
+    let mut counts = HashMap::new();
+    let mut f = File::open("rust_wikipedia.txt").unwrap();
+    let mut s = String::new();
+    f.read_to_string(&mut s).unwrap();
+    for c in s.chars() {
+        let counter = counts.entry(c).or_insert(0);
+        *counter += 1;
+    }
+    counts
+}
+
+fn frequencies(counts: &HashMap<char, u32>) -> HashMap<char, f32> {
+    let mut frequencies = HashMap::new();
+    let total: u32 = counts.values().fold(0, |x, y| x+y);
+    for (&c, &count) in counts {
+        frequencies.insert(c, count as f32 / total as f32);
+    }
+    frequencies
+}
+
+fn score(
 
 fn main() {
     let input = b"49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";

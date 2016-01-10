@@ -108,40 +108,41 @@ fn score_text(buf: &[u8], reference: &ByteWeights) -> f32 {
         .fold(0f32, |x, y| x + y)
 }
 
-fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, f32, Vec<u8>) {
+fn decrypt_single_byte_xor(buf: &mut[u8], reference: &ByteWeights) -> (u8, f32) {
     fn xor_mut(buf: &mut[u8], key: u8) {
         for i in 0..buf.len() {
             buf[i] ^= key;
         }
     }
-    let mut copy = buf.to_vec();
     let mut best_key = 0;
-    let mut best_score = score_text(&copy, reference);
-    for key in 0u16..256 {
+    let mut best_score = score_text(&buf, reference);
+    // Use u16 to deal with the fact that 256 is not a valid u8 bound. Future Rust will have
+    // inclusive ranges to make this easier.
+    for key in 1u16..256 {
+        // Use a compound key that will undo the previous round.
         let key = key as u8;
-        // Encrypt the buffer.
-        xor_mut(&mut copy, key);
+        let compound_key = key ^ (key - 1);
         // Score this version.
-        let score = score_text(&copy, reference);
+        xor_mut(buf, compound_key);
+        let score = score_text(&buf, reference);
         if score > best_score {
             best_score = score;
             best_key = key;
         }
-        // Undo the encryption.
-        xor_mut(&mut copy, key);
     }
     // Redo the best encryption.
-    xor_mut(&mut copy, best_key);
-    (best_key, best_score, copy)
+    xor_mut(buf, 255 ^ best_key);
+    (best_key, best_score)
 }
 
 fn challenge3() {
     println!("challenge 3");
     let wikipedia = wikipedia_str();
     let reference = make_weights(&wikipedia);
-    let encrypted_input = b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-    let (_, _, result) = decrypt_single_byte_xor(&from_hex(encrypted_input), &reference);
-    println!("decrypted result: {}", std::str::from_utf8(&result).unwrap());
+    let hex_input = b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let mut bytes_input = from_hex(hex_input);
+    decrypt_single_byte_xor(&mut bytes_input, &reference);
+    println!("decrypted result: {}", std::str::from_utf8(&bytes_input).unwrap());
 }
 
 fn challenge4() {
@@ -154,11 +155,11 @@ fn challenge4() {
     for line in f.lines() {
         let line = line.unwrap();
         // println!("line: {}", line);
-        let bytes = from_hex(line.as_bytes());
-        let (_, score, result) = decrypt_single_byte_xor(&bytes, &reference);
+        let mut bytes = from_hex(line.as_bytes());
+        let (_, score) = decrypt_single_byte_xor(&mut bytes, &reference);
         if score > best_score {
             best_score = score;
-            best_result = result;
+            best_result = bytes;
         }
     }
     println!("decrypted result: {}", std::str::from_utf8(&best_result).unwrap());

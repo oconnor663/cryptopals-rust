@@ -109,23 +109,30 @@ fn score_text(buf: &[u8], reference: &ByteWeights) -> f32 {
 }
 
 fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, f32, Vec<u8>) {
-    let mut best_result = buf.to_vec();
-    let mut best_key = 0;
-    let mut best_score = score_text(&best_result, reference);
-    for key in 0u16..256 {
-        let key = key as u8;
-        let mut result = buf.to_vec();
-        for i in 0..result.len() {
-            result[i] ^= key;
-        }
-        let score = score_text(&result, reference);
-        if score > best_score {
-            best_score = score;
-            best_result = result;
-            best_key = key;
+    fn xor_mut(buf: &mut[u8], key: u8) {
+        for i in 0..buf.len() {
+            buf[i] ^= key;
         }
     }
-    (best_key, best_score, best_result)
+    let mut copy = buf.to_vec();
+    let mut best_key = 0;
+    let mut best_score = score_text(&copy, reference);
+    for key in 0u16..256 {
+        let key = key as u8;
+        // Encrypt the buffer.
+        xor_mut(&mut copy, key);
+        // Score this version.
+        let score = score_text(&copy, reference);
+        if score > best_score {
+            best_score = score;
+            best_key = key;
+        }
+        // Undo the encryption.
+        xor_mut(&mut copy, key);
+    }
+    // Redo the best encryption.
+    xor_mut(&mut copy, best_key);
+    (best_key, best_score, copy)
 }
 
 fn challenge3() {

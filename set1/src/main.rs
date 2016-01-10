@@ -34,83 +34,103 @@ fn to_base64(bytes: &[u8]) -> String {
         }
     }
     // Handle any extra bits at the end.
-    let empty_bits = if accumulated_bits > 0 {6 - accumulated_bits} else {0};
-    accumulator <<= empty_bits;
-    ret.push(BASE64_ALPHABET[accumulator] as char);
-    for _ in 0..(empty_bits/2) {
-        ret.push('=');
+    if accumulated_bits > 0 {
+        let empty_bits = 6 - accumulated_bits;
+        accumulator <<= empty_bits;
+        ret.push(BASE64_ALPHABET[accumulator] as char);
+        for _ in 0..(empty_bits/2) {
+            ret.push('=');
+        }
     }
     ret
 }
 
 fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
-    let mut ret = Vec::new();
-    for i in 0..std::cmp::max(left.len(), right.len()) {
-        let mut val = 0;
-        if i < left.len() {
-            val ^= left[i];
-        }
-        if i < right.len() {
-            val ^= right[i];
-        }
-        ret.push(val);
+    assert!(left.len() == right.len());
+    let mut ret = left.to_vec();
+    for i in 0..left.len() {
+        ret[i] ^= right[i];
     }
     ret
 }
 
-fn wikipedia_str() -> String {
+fn wikipedia_str() -> Vec<u8> {
     let mut f = File::open("input/rust_wikipedia.txt").unwrap();
-    let mut s = String::new();
-    f.read_to_string(&mut s).unwrap();
-    s
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf).unwrap();
+    buf
 }
 
-fn make_counts(s: &str) -> HashMap<char, u32> {
-    let mut counts = HashMap::new();
-    for c in s.chars() {
-        let counter = counts.entry(c).or_insert(0);
+type ByteCounts = HashMap<u8, u64>;
+
+fn make_counts(buf: &[u8]) -> ByteCounts {
+    let mut counts = ByteCounts::new();
+    for c in buf {
+        let counter = counts.entry(*c).or_insert(0);
         *counter += 1;
     }
     counts
 }
 
-fn make_frequencies(s: &str) -> HashMap<char, f32> {
-    let counts = make_counts(s);
-    let mut frequencies = HashMap::new();
-    let total: u32 = counts.values().fold(0, |x, y| x+y);
+type ByteWeights = HashMap<u8, f64>;
+
+fn make_weights(buf: &[u8]) -> HashMap<u8, f64> {
+    let counts = make_counts(buf);
+    let mut normalized = ByteWeights::new();
+    let mag_squared: u64 = counts.values().fold(0, |acc, x| acc + x*x);
+    let mag = (mag_squared as f64).sqrt();
     for (c, count) in counts {
-        frequencies.insert(c, count as f32 / total as f32);
+        normalized.insert(c, count as f64 / mag as f64);
     }
-    frequencies
+    normalized
 }
 
-fn score(s: &str, reference: &HashMap<char, f32>) -> f32 {
-    let frequencies = make_frequencies(s);
-    frequencies.keys()
-        .map(|c| frequencies[c] * reference[c])
-        .fold(0f32, |x, y| x + y)
+fn score_text(buf: &[u8], reference: &ByteWeights) -> f64 {
+    let normalized = make_weights(buf);
+    normalized.iter()
+        .map(|(c, weight)| *weight * *(reference.get(c).unwrap_or(&0f64)))
+        .fold(0f64, |x, y| x + y)
+}
+
+fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, Vec<u8>) {
+    let mut best_result = buf.to_vec();
+    let mut best_key = 0;
+    let mut best_score = score_text(&best_result, reference);
+    for key in 0u16..256 {
+        let key = key as u8;
+        let mut result = buf.to_vec();
+        for i in 0..result.len() {
+            result[i] ^= key;
+        }
+        let score = score_text(&result, reference);
+        if score > best_score {
+            best_score = score;
+            best_result = result;
+            best_key = key;
+        }
+    }
+    (best_key, best_result)
 }
 
 fn main() {
+    // challenge 1
     let input = b"49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-    println!("input {}", std::str::from_utf8(input).unwrap());
+    let expected_output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
     let bytes = from_hex(input);
     let output = to_base64(&*bytes);
-    println!("{}", output);
+    assert!(output == expected_output);
 
+    // challenge 2
     let xor_left = [1, 1, 1];
-    let xor_right = [2, 2, 2, 2];
+    let xor_right = [2, 2, 2];
     let xor_result = xor(&xor_left, &xor_right);
-    println!("xor result: {:?}", xor_result);
+    assert!(xor_result == vec![3, 3, 3]);
 
-    let bad_english = "qqqqqqqqqq";
-    let good_english = "eeeeeeeeeeee";
-    let great_english = wikipedia_str();
-    let reference = make_frequencies(&great_english);
-    println!("bad {}", score(bad_english, &reference));
-    println!("good {}", score(good_english, &reference));
-    println!("great {}", score(&great_english, &reference));
-    let freq = make_frequencies(&great_english);
-    println!("{:?}", make_frequencies(&great_english));
-    println!("{}", freq.values().fold(0f32, |x, y| x + y));
+    println!("challenge 3");
+    let wikipedia = wikipedia_str();
+    let reference = make_weights(&wikipedia);
+    let encrypted_input = b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let (key, result) = decrypt_single_byte_xor(&from_hex(encrypted_input), &reference);
+    println!("decryption key: 0x{:x}", key);
+    println!("decrypted result: {}", std::str::from_utf8(&result).unwrap());
 }

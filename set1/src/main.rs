@@ -45,6 +45,15 @@ fn to_base64(bytes: &[u8]) -> String {
     ret
 }
 
+fn challenge1() {
+    // challenge 1
+    let input = b"49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
+    let expected_output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
+    let bytes = from_hex(input);
+    let output = to_base64(&*bytes);
+    assert!(output == expected_output);
+}
+
 fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
     assert!(left.len() == right.len());
     let mut ret = left.to_vec();
@@ -52,6 +61,14 @@ fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
         ret[i] ^= right[i];
     }
     ret
+}
+
+fn challenge2() {
+    // challenge 2
+    let xor_left = [1, 1, 1];
+    let xor_right = [2, 2, 2];
+    let xor_result = xor(&xor_left, &xor_right);
+    assert!(xor_result == vec![3, 3, 3]);
 }
 
 fn wikipedia_str() -> Vec<u8> {
@@ -112,20 +129,7 @@ fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, Vec<u8>)
     (best_key, best_result)
 }
 
-fn main() {
-    // challenge 1
-    let input = b"49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-    let expected_output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
-    let bytes = from_hex(input);
-    let output = to_base64(&*bytes);
-    assert!(output == expected_output);
-
-    // challenge 2
-    let xor_left = [1, 1, 1];
-    let xor_right = [2, 2, 2];
-    let xor_result = xor(&xor_left, &xor_right);
-    assert!(xor_result == vec![3, 3, 3]);
-
+fn challenge3() {
     println!("challenge 3");
     let wikipedia = wikipedia_str();
     let reference = make_weights(&wikipedia);
@@ -133,4 +137,10 @@ fn main() {
     let (key, result) = decrypt_single_byte_xor(&from_hex(encrypted_input), &reference);
     println!("decryption key: 0x{:x}", key);
     println!("decrypted result: {}", std::str::from_utf8(&result).unwrap());
+}
+
+fn main() {
+    challenge1();
+    challenge2();
+    challenge3();
 }

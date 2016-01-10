@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::fs::File;
 
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
@@ -109,7 +110,7 @@ fn score_text(buf: &[u8], reference: &ByteWeights) -> f64 {
         .fold(0f64, |x, y| x + y)
 }
 
-fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, Vec<u8>) {
+fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, f64, Vec<u8>) {
     let mut best_result = buf.to_vec();
     let mut best_key = 0;
     let mut best_score = score_text(&best_result, reference);
@@ -126,7 +127,7 @@ fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, Vec<u8>)
             best_key = key;
         }
     }
-    (best_key, best_result)
+    (best_key, best_score, best_result)
 }
 
 fn challenge3() {
@@ -134,13 +135,32 @@ fn challenge3() {
     let wikipedia = wikipedia_str();
     let reference = make_weights(&wikipedia);
     let encrypted_input = b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-    let (key, result) = decrypt_single_byte_xor(&from_hex(encrypted_input), &reference);
-    println!("decryption key: 0x{:x}", key);
+    let (_, _, result) = decrypt_single_byte_xor(&from_hex(encrypted_input), &reference);
     println!("decrypted result: {}", std::str::from_utf8(&result).unwrap());
+}
+
+fn challenge4() {
+    println!("challenge 4");
+    let wikipedia = wikipedia_str();
+    let reference = make_weights(&wikipedia);
+    let mut best_score = 0f64;
+    let mut best_result = vec![];
+    let f = BufReader::new(File::open("input/4.txt").unwrap());
+    for line in f.lines() {
+        let line = line.unwrap();
+        let bytes = from_hex(line.as_bytes());
+        let (_, score, result) = decrypt_single_byte_xor(&bytes, &reference);
+        if score > best_score {
+            best_score = score;
+            best_result = result;
+        }
+    }
+    println!("decrypted result: {}", std::str::from_utf8(&best_result).unwrap());
 }
 
 fn main() {
     challenge1();
     challenge2();
     challenge3();
+    challenge4();
 }

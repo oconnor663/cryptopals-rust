@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
@@ -79,38 +78,37 @@ fn wikipedia_str() -> Vec<u8> {
     buf
 }
 
-type ByteCounts = HashMap<u8, u64>;
+type ByteCounts = [u32; 256];
 
 fn make_counts(buf: &[u8]) -> ByteCounts {
-    let mut counts = ByteCounts::new();
+    let mut counts = [0; 256];
     for c in buf {
-        let counter = counts.entry(*c).or_insert(0);
-        *counter += 1;
+        counts[*c as usize] += 1
     }
     counts
 }
 
-type ByteWeights = HashMap<u8, f64>;
+type ByteWeights = [f32; 256];
 
-fn make_weights(buf: &[u8]) -> HashMap<u8, f64> {
+fn make_weights(buf: &[u8]) -> ByteWeights {
     let counts = make_counts(buf);
-    let mut normalized = ByteWeights::new();
-    let mag_squared: u64 = counts.values().fold(0, |acc, x| acc + x*x);
-    let mag = (mag_squared as f64).sqrt();
-    for (c, count) in counts {
-        normalized.insert(c, count as f64 / mag as f64);
+    let mut normalized = [0f32; 256];
+    let mag_squared: u32 = counts.iter().fold(0, |acc, x| acc + x*x);
+    let mag = (mag_squared as f32).sqrt();
+    for (c, count) in counts.iter().enumerate() {
+        normalized[c] = *count as f32 / mag;
     }
     normalized
 }
 
-fn score_text(buf: &[u8], reference: &ByteWeights) -> f64 {
+fn score_text(buf: &[u8], reference: &ByteWeights) -> f32 {
     let normalized = make_weights(buf);
-    normalized.iter()
-        .map(|(c, weight)| *weight * *(reference.get(c).unwrap_or(&0f64)))
-        .fold(0f64, |x, y| x + y)
+    normalized.iter().enumerate()
+        .map(|(c, weight)| *weight * *(reference.get(c).unwrap_or(&0f32)))
+        .fold(0f32, |x, y| x + y)
 }
 
-fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, f64, Vec<u8>) {
+fn decrypt_single_byte_xor(buf: &[u8], reference: &ByteWeights) -> (u8, f32, Vec<u8>) {
     let mut best_result = buf.to_vec();
     let mut best_key = 0;
     let mut best_score = score_text(&best_result, reference);
@@ -143,11 +141,12 @@ fn challenge4() {
     println!("challenge 4");
     let wikipedia = wikipedia_str();
     let reference = make_weights(&wikipedia);
-    let mut best_score = 0f64;
+    let mut best_score = 0f32;
     let mut best_result = vec![];
     let f = BufReader::new(File::open("input/4.txt").unwrap());
     for line in f.lines() {
         let line = line.unwrap();
+        // println!("line: {}", line);
         let bytes = from_hex(line.as_bytes());
         let (_, score, result) = decrypt_single_byte_xor(&bytes, &reference);
         if score > best_score {

@@ -16,6 +16,14 @@ fn from_hex(input: &[u8]) -> Vec<u8> {
     ret
 }
 
+fn to_hex(input: &[u8]) -> String {
+    let mut ret = String::new();
+    for b in input {
+        ret.push_str(&format!("{:02x}", b));
+    }
+    ret
+}
+
 fn to_base64(bytes: &[u8]) -> String {
     let mut accumulator = 0usize;
     let mut accumulated_bits = 0;
@@ -154,7 +162,6 @@ fn challenge4() {
     let f = BufReader::new(File::open("input/4.txt").unwrap());
     for line in f.lines() {
         let line = line.unwrap();
-        // println!("line: {}", line);
         let mut bytes = from_hex(line.as_bytes());
         let (_, score) = decrypt_single_byte_xor(&mut bytes, &reference);
         if score > best_score {
@@ -162,7 +169,25 @@ fn challenge4() {
             best_result = bytes;
         }
     }
-    println!("decrypted result: {}", std::str::from_utf8(&best_result).unwrap());
+    println!("decrypted result: {:?}", std::str::from_utf8(&best_result).unwrap());
+}
+
+fn encrypt_repeating_key_xor(buf: &mut[u8], key: &[u8]) {
+    for i in 0..buf.len() {
+        let key_byte = key[i % key.len()];
+        buf[i] ^= key_byte;
+    }
+}
+
+fn challenge5() {
+    let input = b"Burning 'em, if you ain't quick and nimble\n\
+                  I go crazy when I hear a cymbal";
+    let mut buf = input.to_vec();
+    encrypt_repeating_key_xor(&mut buf, b"ICE");
+    let expected = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a\
+                    26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027\
+                    630c692b20283165286326302e27282f";
+    assert!(expected == to_hex(&buf));
 }
 
 fn main() {
@@ -170,4 +195,5 @@ fn main() {
     challenge2();
     challenge3();
     challenge4();
+    challenge5();
 }

@@ -190,10 +190,39 @@ fn challenge5() {
     assert!(expected == to_hex(&buf));
 }
 
+fn count_bits(mut byte: u8) -> u8 {
+    let mut bits = 0;
+    while byte != 0 {
+        if byte % 2 == 1 {
+            bits += 1;
+        }
+        byte >>= 1;
+    }
+    bits
+}
+
+fn edit_distance(s1: &[u8], s2: &[u8]) -> u32 {
+    assert!(s1.len() == s2.len());
+    let mut bits = 0;
+    for i in 0..s1.len() {
+        bits += count_bits(s1[i] ^ s2[i]) as u32;
+    }
+    bits
+}
+
+fn normalized_edit_distance(s1: &[u8], s2: &[u8]) -> f32 {
+    edit_distance(s1, s2) as f32 / s1.len() as f32
+}
+
+fn challenge6() {
+    assert!(edit_distance("this is a test".as_bytes(), "wokka wokka!!!".as_bytes()) == 37);
+}
+
 fn main() {
     challenge1();
     challenge2();
     challenge3();
     challenge4();
     challenge5();
+    challenge6();
 }

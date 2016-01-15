@@ -1,6 +1,10 @@
+extern crate rustc_serialize;
+
+use rustc_serialize::base64::FromBase64;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
+use std::f32;
 
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
 const BASE64_ALPHABET: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -86,6 +90,10 @@ fn wikipedia_str() -> Vec<u8> {
     buf
 }
 
+fn reference_weights() -> ByteWeights {
+    make_weights(&wikipedia_str())
+}
+
 type ByteCounts = [u32; 256];
 
 fn make_counts(buf: &[u8]) -> ByteCounts {
@@ -145,8 +153,7 @@ fn decrypt_single_byte_xor(buf: &mut[u8], reference: &ByteWeights) -> (u8, f32) 
 
 fn challenge3() {
     println!("challenge 3");
-    let wikipedia = wikipedia_str();
-    let reference = make_weights(&wikipedia);
+    let reference = reference_weights();
     let hex_input = b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let mut bytes_input = from_hex(hex_input);
     decrypt_single_byte_xor(&mut bytes_input, &reference);
@@ -155,8 +162,7 @@ fn challenge3() {
 
 fn challenge4() {
     println!("challenge 4");
-    let wikipedia = wikipedia_str();
-    let reference = make_weights(&wikipedia);
+    let reference = reference_weights();
     let mut best_score = 0f32;
     let mut best_result = vec![];
     let f = BufReader::new(File::open("input/4.txt").unwrap());
@@ -215,7 +221,39 @@ fn normalized_edit_distance(s1: &[u8], s2: &[u8]) -> f32 {
 }
 
 fn challenge6() {
+    println!("challenge 6");
     assert!(edit_distance("this is a test".as_bytes(), "wokka wokka!!!".as_bytes()) == 37);
+    let reference = reference_weights();
+    let mut f = File::open("input/6.txt").unwrap();
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf).unwrap();
+    let mut decoded = buf.from_base64().unwrap();
+    // Determine the key size.
+    let mut min_distance = f32::MAX;
+    let mut best_key_size = 0;
+    for key_size in 2..40 {
+        let distance = normalized_edit_distance(&decoded[0..key_size], &decoded[key_size..2*key_size]);
+        if distance < min_distance {
+            min_distance = distance;
+            best_key_size = key_size
+        }
+    }
+    // Solve for each key byte.
+    let mut key = Vec::new();
+    for key_index in 0..best_key_size {
+        // Assemble this sample of the ciphertext.
+        let mut sample = Vec::new();
+        for sample_index in 0..(decoded.len() / best_key_size) {
+            sample.push(decoded[best_key_size * sample_index + key_index]);
+        }
+        let (key_byte, _) = decrypt_single_byte_xor(&mut sample, &reference);
+        key.push(key_byte);
+    }
+    // Decrypt the original decoded buffer.
+    for i in 0..decoded.len() {
+        decoded[i] ^= key[i % key.len()]
+    }
+    println!("{}", std::str::from_utf8(&decoded).unwrap());
 }
 
 fn main() {

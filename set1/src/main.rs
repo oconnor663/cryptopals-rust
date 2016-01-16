@@ -1,10 +1,12 @@
 extern crate rustc_serialize;
+extern crate crypto;
 
 use rustc_serialize::base64::FromBase64;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 use std::str;
+use crypto::symmetriccipher::BlockDecryptor;
 
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
 const BASE64_ALPHABET: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -261,19 +263,46 @@ fn decrypt_repeating_key_xor(buf: &[u8], reference: &ByteWeights) -> (Vec<u8>, V
     (best_key, best_plaintext)
 }
 
+fn read_base64_file(path: &str) -> Vec<u8> {
+    let mut f = File::open(path).unwrap();
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf).unwrap();
+    let decoded = buf.from_base64().unwrap();
+    decoded
+}
+
 fn challenge6() {
     // The suggested approach of comparing edit distances worked really poorly...
     println!("challenge 6");
     assert!(edit_distance("this is a test".as_bytes(), "wokka wokka!!!".as_bytes()) == 37);
     let reference = reference_weights();
-    let mut f = File::open("input/6.txt").unwrap();
-    let mut buf = Vec::new();
-    f.read_to_end(&mut buf).unwrap();
-    let decoded = buf.from_base64().unwrap();
+    let decoded = read_base64_file("input/6.txt");
     let (key, plaintext) = decrypt_repeating_key_xor(&decoded, &reference);
     println!("The key is: '{}'", str::from_utf8(&key).unwrap());
     for line in str::from_utf8(&plaintext).unwrap().lines().take(2) {
         println!("  {}", line)
+    }
+}
+
+fn decrypt_aes128_ecb(buf: &[u8], key: &[u8]) -> Vec<u8> {
+    assert!(buf.len() % 16 == 0);
+    assert!(key.len() == 16);
+    let dec = crypto::aessafe::AesSafe128Decryptor::new(key);
+    let mut result = Vec::new();
+    for i in 0..buf.len()/16 {
+        let mut tmp = [0; 16];
+        dec.decrypt_block(&buf[16*i..16*(i+1)], &mut tmp);
+        result.extend(&tmp);
+    }
+    result
+}
+
+fn challenge7() {
+    println!("challenge 7");
+    let ciphertext = read_base64_file("input/7.txt");
+    let plaintext = decrypt_aes128_ecb(&ciphertext, b"YELLOW SUBMARINE");
+    for line in str::from_utf8(&plaintext).unwrap().lines().skip(2).take(2) {
+        println!("  {}", line);
     }
 }
 
@@ -284,4 +313,5 @@ fn main() {
     challenge4();
     challenge5();
     challenge6();
+    challenge7();
 }

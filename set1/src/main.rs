@@ -1,12 +1,13 @@
 extern crate rustc_serialize;
 extern crate crypto;
 
+use crypto::symmetriccipher::BlockDecryptor;
 use rustc_serialize::base64::FromBase64;
+use std::collections::HashSet;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 use std::str;
-use crypto::symmetriccipher::BlockDecryptor;
 
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
 const BASE64_ALPHABET: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -306,6 +307,21 @@ fn challenge7() {
     }
 }
 
+fn challenge8() {
+    println!("challenge 8");
+    for line in BufReader::new(File::open("input/8.txt").unwrap()).lines() {
+        let bytes = from_hex(line.unwrap().as_bytes());
+        let mut chunks = HashSet::new();
+        for i in 0..bytes.len()/16 {
+            let is_new_chunk = chunks.insert(&bytes[16*i..16*(i+1)]);
+            if !is_new_chunk {
+                println!("{}", to_hex(&bytes));
+                return;
+            }
+        }
+    }
+}
+
 fn main() {
     challenge1();
     challenge2();
@@ -314,4 +330,5 @@ fn main() {
     challenge5();
     challenge6();
     challenge7();
+    challenge8();
 }

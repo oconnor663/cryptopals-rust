@@ -4,7 +4,7 @@ use rustc_serialize::base64::FromBase64;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
-use std::f32;
+use std::str;
 
 const HEX_ALPHABET: &'static [u8] = b"0123456789abcdef";
 const BASE64_ALPHABET: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -216,44 +216,65 @@ fn edit_distance(s1: &[u8], s2: &[u8]) -> u32 {
     bits
 }
 
-fn normalized_edit_distance(s1: &[u8], s2: &[u8]) -> f32 {
-    edit_distance(s1, s2) as f32 / s1.len() as f32
+// fn normalized_edit_distance(s1: &[u8], s2: &[u8]) -> f32 {
+//     edit_distance(s1, s2) as f32 / s1.len() as f32
+// }
+
+fn decrypt_repeating_key_xor_with_len(buf: &[u8], keylen: usize, reference: &ByteWeights) -> (Vec<u8>, Vec<u8>, f32) {
+    let mut key = Vec::new();
+    // determine the key
+    for key_index in 0..keylen {
+        let mut sample = Vec::new();
+        for buf_index in 0..buf.len() {
+            if buf_index % keylen == key_index {
+                sample.push(buf[buf_index]);
+            }
+        }
+        let (key_byte, _) = decrypt_single_byte_xor(&mut sample, reference);
+        key.push(key_byte)
+    }
+    // score the plaintext
+    let mut copy = buf.to_vec();
+    encrypt_repeating_key_xor(&mut copy, &key);
+    let score = score_text(&copy, reference);
+    (key, copy, score)
+}
+
+// fn normalized_distance_for_size(buf: &[u8], key_size: usize) -> f32 {
+//     let first = normalized_edit_distance(&buf[0..key_size], &buf[key_size..2*key_size]);
+//     let second = normalized_edit_distance(&buf[2*key_size..3*key_size], &buf[3*key_size..4*key_size]);
+//     (first + second) / 2.0
+// }
+
+fn decrypt_repeating_key_xor(buf: &[u8], reference: &ByteWeights) -> (Vec<u8>, Vec<u8>) {
+    let mut best_score = 0.;
+    let mut best_key = Vec::new();
+    let mut best_plaintext = Vec::new();
+    for key_size in 2..40 {
+        let (key, plaintext, score) = decrypt_repeating_key_xor_with_len(buf, key_size, &reference);
+        if score > best_score {
+            best_score = score;
+            best_key = key;
+            best_plaintext = plaintext;
+        }
+    }
+    (best_key, best_plaintext)
 }
 
 fn challenge6() {
+    // The suggested approach of comparing edit distances worked really poorly...
     println!("challenge 6");
     assert!(edit_distance("this is a test".as_bytes(), "wokka wokka!!!".as_bytes()) == 37);
     let reference = reference_weights();
     let mut f = File::open("input/6.txt").unwrap();
     let mut buf = Vec::new();
     f.read_to_end(&mut buf).unwrap();
-    let mut decoded = buf.from_base64().unwrap();
-    // Determine the key size.
-    let mut min_distance = f32::MAX;
-    let mut best_key_size = 0;
-    for key_size in 2..40 {
-        let distance = normalized_edit_distance(&decoded[0..key_size], &decoded[key_size..2*key_size]);
-        if distance < min_distance {
-            min_distance = distance;
-            best_key_size = key_size
-        }
+    let decoded = buf.from_base64().unwrap();
+    let (key, plaintext) = decrypt_repeating_key_xor(&decoded, &reference);
+    println!("The key is: '{}'", str::from_utf8(&key).unwrap());
+    for line in str::from_utf8(&plaintext).unwrap().lines().take(2) {
+        println!("  {}", line)
     }
-    // Solve for each key byte.
-    let mut key = Vec::new();
-    for key_index in 0..best_key_size {
-        // Assemble this sample of the ciphertext.
-        let mut sample = Vec::new();
-        for sample_index in 0..(decoded.len() / best_key_size) {
-            sample.push(decoded[best_key_size * sample_index + key_index]);
-        }
-        let (key_byte, _) = decrypt_single_byte_xor(&mut sample, &reference);
-        key.push(key_byte);
-    }
-    // Decrypt the original decoded buffer.
-    for i in 0..decoded.len() {
-        decoded[i] ^= key[i % key.len()]
-    }
-    println!("{}", std::str::from_utf8(&decoded).unwrap());
 }
 
 fn main() {

@@ -1,0 +1,8 @@
+[package]
+name = "set2"
+version = "0.1.0"
+authors = ["jacko"]
+
+[dependencies]
+"rust-crypto" = "*"
+"rustc-serialize" = "*"

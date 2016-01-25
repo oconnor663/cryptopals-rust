@@ -6,3 +6,4 @@ authors = ["jacko"]
 [dependencies]
 "rust-crypto" = "*"
 "rustc-serialize" = "*"
+"rand" = "*"

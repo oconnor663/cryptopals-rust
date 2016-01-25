@@ -2,6 +2,7 @@
 name = "set2"
 version = "0.1.0"
 dependencies = [
+ "rand 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-crypto 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

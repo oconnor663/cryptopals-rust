@@ -134,7 +134,7 @@ enum BlockMode {
 }
 
 fn detect_encryption_type<F>(oracle: F) -> BlockMode
-    where F: FnOnce(&[u8]) -> Vec<u8> {
+where F: FnOnce(&[u8]) -> Vec<u8> {
     let plaintext = [0; 64];
     let ciphertext = oracle(&plaintext);
     let mut blocks = HashSet::new();
@@ -178,17 +178,53 @@ fn oracle12(input: &[u8]) -> Vec<u8> {
 fn challenge12() {
     let first_len = oracle12(b"").len();
     let second_len: usize;
-    let mut input = vec![b'A'];
+    let mut scratch_input = vec![b'A'];
     loop {
-        let this_len = oracle12(&input).len();
+        let this_len = oracle12(&scratch_input).len();
         if this_len > first_len {
             second_len = this_len;
             break
         }
-        input.push(b'A');
+        scratch_input.push(b'A');
     }
+    let plaintext_len = first_len - scratch_input.len();
     let block_size = second_len - first_len;
     println!("block size: {}", block_size);
+    let block_mode = detect_encryption_type(oracle12);
+    println!("block mode: {:?}", block_mode);
+    let mut plaintext = Vec::new();
+    for i in 0..plaintext_len {
+        // enough A's to put our byte of interest at the end of a block
+        let input = vec![b'A'; block_size - 1 - (i % block_size)];
+        let ciphertext = oracle12(&input);
+        // the block our byte is at the end of
+        let block_start = i - (i%block_size);
+        let block_end = block_start + block_size;
+        let block_of_interest = &ciphertext[block_start..block_end];
+        // Now try out all possible blocks that could be.
+        let mut next_byte = None;
+        for candidate in 0u16..256 {
+            let candidate = candidate as u8;
+            let mut candidate_input;
+            if plaintext.len() < block_size - 1 {
+                // If we're still inside the first block of plaintext, pad the candidate input.
+                candidate_input = vec![b'A'; block_size - 1 - plaintext.len()];
+                candidate_input.extend_from_slice(&plaintext);
+            } else {
+                // Otherwise just use the end of the plaintext.
+                candidate_input = plaintext[(plaintext.len()-block_size+1)..plaintext.len()].to_vec();
+            }
+            candidate_input.push(candidate as u8);
+            let candidate_ciphertext = oracle12(&candidate_input);
+            let candidate_block = &candidate_ciphertext[0..block_size];
+            if candidate_block == block_of_interest {
+                next_byte = Some(candidate);
+                break
+            }
+        }
+        plaintext.push(next_byte.unwrap());
+    }
+    println!("{}", std::str::from_utf8(&plaintext).unwrap());
 }
 
 fn main() {

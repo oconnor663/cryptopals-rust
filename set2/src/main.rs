@@ -159,8 +159,41 @@ fn challenge11() {
     println!("All checks passed.");
 }
 
+const INPUT12: &'static str = "\
+Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+YnkK";
+
+fn oracle12(input: &[u8]) -> Vec<u8> {
+    let mut buf = input.to_vec();
+    let suffix = INPUT12.from_base64().unwrap();
+    buf.extend_from_slice(&suffix);
+    let key = b"SHH don't tell!!";
+    let mut padded_buf = pad(&buf, 16);
+    aes_ecb_encrypt(&mut padded_buf, key);
+    return padded_buf
+}
+
+fn challenge12() {
+    let first_len = oracle12(b"").len();
+    let second_len: usize;
+    let mut input = vec![b'A'];
+    loop {
+        let this_len = oracle12(&input).len();
+        if this_len > first_len {
+            second_len = this_len;
+            break
+        }
+        input.push(b'A');
+    }
+    let block_size = second_len - first_len;
+    println!("block size: {}", block_size);
+}
+
 fn main() {
     challenge9();
     challenge10();
     challenge11();
+    challenge12();
 }

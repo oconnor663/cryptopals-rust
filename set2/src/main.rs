@@ -10,6 +10,7 @@ use rand::{OsRng, Rng};
 use std::fs::File;
 use std::io::prelude::*;
 use std::collections::HashSet;
+use std::collections::HashMap;
 
 fn pad(buf: &[u8], blocksize: u8) -> Vec<u8> {
     let mut result = buf.to_vec();
@@ -224,7 +225,30 @@ fn challenge12() {
         }
         plaintext.push(next_byte.unwrap());
     }
-    println!("{}", std::str::from_utf8(&plaintext).unwrap());
+    print!("{}", std::str::from_utf8(&plaintext).unwrap());
+}
+
+fn parse_cookie(cookie: &str) -> HashMap<&str, &str> {
+    let mut map = HashMap::new();
+    for pair in cookie.split('&') {
+        let mut parts = pair.split('=');
+        let key = parts.next().unwrap();
+        let val = parts.next().unwrap();
+        map.insert(key, val);
+    }
+    map
+}
+
+fn profile_for(email: &str) -> String {
+    let email = email.replace("&", "AND").replace("=", "EQUALS");
+    return format!("email={}&uid=10&role=user", email);
+}
+
+fn challenge13() {
+    println!("challenge 13");
+    let profile = profile_for("steve&=foo=");
+    println!("{}", profile);
+    println!("{:?}", parse_cookie(&profile));
 }
 
 fn main() {
@@ -232,4 +256,5 @@ fn main() {
     challenge10();
     challenge11();
     challenge12();
+    challenge13();
 }

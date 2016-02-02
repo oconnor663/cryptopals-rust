@@ -212,7 +212,7 @@ fn challenge12() {
                 candidate_input.extend_from_slice(&plaintext);
             } else {
                 // Otherwise just use the end of the plaintext.
-                candidate_input = plaintext[(plaintext.len()-block_size+1)..plaintext.len()].to_vec();
+                candidate_input = plaintext[(plaintext.len()+1-block_size)..plaintext.len()].to_vec();
             }
             candidate_input.push(candidate as u8);
             let candidate_ciphertext = oracle12(&candidate_input);

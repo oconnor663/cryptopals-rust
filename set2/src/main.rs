@@ -89,6 +89,17 @@ fn aes_ecb_encrypt(buf: &mut [u8], key: &[u8]) {
     }
 }
 
+fn aes_ecb_decrypt(buf: &mut [u8], key: &[u8]) {
+    assert!(buf.len() % 16 == 0);
+    assert!(key.len() == 16);
+    let enc = crypto::aessafe::AesSafe128Decryptor::new(key);
+    let mut plaintext_block = [0; 16];
+    for chunk in buf.chunks_mut(16) {
+        enc.decrypt_block(chunk, &mut plaintext_block);
+        copy_to(chunk, &plaintext_block);
+    }
+}
+
 fn challenge10() {
     println!("exercise 10");
     let mut f = File::open("input/10.txt").unwrap();
@@ -228,13 +239,15 @@ fn challenge12() {
     print!("{}", std::str::from_utf8(&plaintext).unwrap());
 }
 
-fn parse_cookie(cookie: &str) -> HashMap<&str, &str> {
-    let mut map = HashMap::new();
+type Profile = HashMap<String, String>;
+
+fn parse_cookie(cookie: &str) -> Profile {
+    let mut map = Profile::new();
     for pair in cookie.split('&') {
         let mut parts = pair.split('=');
         let key = parts.next().unwrap();
         let val = parts.next().unwrap();
-        map.insert(key, val);
+        map.insert(String::from(key), String::from(val));
     }
     map
 }
@@ -244,11 +257,41 @@ fn profile_for(email: &str) -> String {
     return format!("email={}&uid=10&role=user", email);
 }
 
+const PROFILE_KEY: &'static[u8] = b"randomly generat";
+
+fn encrypt_profile(email: &str) -> Vec<u8> {
+    let profile = profile_for(email);
+    println!("encrypting profile string: {:?}", profile);
+    let mut padded_profile = pad(profile_for(email).as_bytes(), 16);
+    aes_ecb_encrypt(&mut padded_profile, PROFILE_KEY);
+    padded_profile
+}
+
+fn decrypt_profile(ciphertext: &[u8]) -> Profile {
+    let mut padded = ciphertext.to_vec();
+    aes_ecb_decrypt(&mut padded, PROFILE_KEY);
+    let unpadded = unpad(&padded);
+    println!("decrypted profile string: {:?}", std::str::from_utf8(unpadded).unwrap());
+    parse_cookie(std::str::from_utf8(unpadded).unwrap())
+}
+
+fn produce_admin_ciphertext() -> Vec<u8> {
+    let admin_block = pad(b"admin", 16);
+    let mut email = vec![b'A'; 10];
+    email.extend_from_slice(&admin_block);
+    let encrypted_admin_block = &encrypt_profile(std::str::from_utf8(&email).unwrap())[16..32];
+    let email_13_chars = "AAAAAAAAAAAAA";
+    let mut ciphertext = encrypt_profile(email_13_chars);
+    ciphertext.truncate(32);
+    ciphertext.extend_from_slice(encrypted_admin_block);
+    ciphertext
+}
+
 fn challenge13() {
     println!("challenge 13");
-    let profile = profile_for("steve&=foo=");
-    println!("{}", profile);
-    println!("{:?}", parse_cookie(&profile));
+    let admin_ciphertext = produce_admin_ciphertext();
+    let profile = decrypt_profile(&admin_ciphertext);
+    println!("{:?}", profile);
 }
 
 fn main() {

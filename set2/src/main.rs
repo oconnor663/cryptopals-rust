@@ -294,10 +294,26 @@ fn challenge13() {
     println!("{:?}", profile);
 }
 
+fn oracle14(input: &[u8]) -> Vec<u8> {
+    let mut buf = b"seeecret prefix omggggggggg!!!!111111owowowojsadoifj".to_vec();
+    buf.extend_from_slice(input);
+    let suffix = INPUT12.from_base64().unwrap();
+    buf.extend_from_slice(&suffix);
+    let key = b"YELLOW SUBMARINE";
+    let mut padded_buf = pad(&buf, 16);
+    aes_ecb_encrypt(&mut padded_buf, key);
+    return padded_buf
+}
+
+fn challenge14() {
+    oracle14(b"this is my message");
+}
+
 fn main() {
     challenge9();
     challenge10();
     challenge11();
     challenge12();
     challenge13();
+    challenge14();
 }

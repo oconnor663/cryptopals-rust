@@ -260,8 +260,6 @@ fn profile_for(email: &str) -> String {
 const PROFILE_KEY: &'static[u8] = b"randomly generat";
 
 fn encrypt_profile(email: &str) -> Vec<u8> {
-    let profile = profile_for(email);
-    println!("encrypting profile string: {:?}", profile);
     let mut padded_profile = pad(profile_for(email).as_bytes(), 16);
     aes_ecb_encrypt(&mut padded_profile, PROFILE_KEY);
     padded_profile
@@ -271,7 +269,6 @@ fn decrypt_profile(ciphertext: &[u8]) -> Profile {
     let mut padded = ciphertext.to_vec();
     aes_ecb_decrypt(&mut padded, PROFILE_KEY);
     let unpadded = unpad(&padded);
-    println!("decrypted profile string: {:?}", std::str::from_utf8(unpadded).unwrap());
     parse_cookie(std::str::from_utf8(unpadded).unwrap())
 }
 
@@ -335,9 +332,52 @@ fn determine_prefix_len() -> usize {
 }
 
 fn challenge14() {
+    println!("challenge 14");
     let prefix_len = determine_prefix_len();
     assert_eq!(prefix_len, SECRET_PREFIX_14.len());
     println!("prefix len: {}", prefix_len);
+    let extra_prefix = vec![b'A'; 16 - prefix_len%16];
+    let input_start = prefix_len + extra_prefix.len();
+    // cheat this time around
+    let block_size = 16;
+    let plaintext_len = INPUT12.from_base64().unwrap().len();
+    let mut plaintext = Vec::new();
+    for i in 0..plaintext_len {
+        // enough A's to put our byte of interest at the end of a block
+        let input = vec![b'A'; block_size - 1 - (i % block_size)];
+        let mut prefixed_input = extra_prefix.to_vec();
+        prefixed_input.extend_from_slice(&input);
+        let ciphertext = oracle14(&prefixed_input);
+        // the block our byte is at the end of
+        let block_start = input_start + i - (i%block_size);
+        let block_end = block_start + block_size;
+        let block_of_interest = &ciphertext[block_start..block_end];
+        // Now try out all possible blocks that could be.
+        let mut next_byte = None;
+        for candidate in 0u16..256 {
+            let candidate = candidate as u8;
+            let mut candidate_input;
+            if plaintext.len() < block_size - 1 {
+                // If we're still inside the first block of plaintext, pad the candidate input.
+                candidate_input = vec![b'A'; block_size - 1 - plaintext.len()];
+                candidate_input.extend_from_slice(&plaintext);
+            } else {
+                // Otherwise just use the end of the plaintext.
+                candidate_input = plaintext[(plaintext.len()+1-block_size)..plaintext.len()].to_vec();
+            }
+            candidate_input.push(candidate as u8);
+            let mut prefixed_input = extra_prefix.to_vec();
+            prefixed_input.extend_from_slice(&candidate_input);
+            let candidate_ciphertext = oracle14(&prefixed_input);
+            let candidate_block = &candidate_ciphertext[input_start..input_start + block_size];
+            if candidate_block == block_of_interest {
+                next_byte = Some(candidate);
+                break
+            }
+        }
+        plaintext.push(next_byte.unwrap());
+    }
+    print!("{}", std::str::from_utf8(&plaintext).unwrap());
 }
 
 fn main() {

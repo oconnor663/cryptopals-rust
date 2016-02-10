@@ -294,8 +294,11 @@ fn challenge13() {
     println!("{:?}", profile);
 }
 
+const SECRET_PREFIX_14: &'static [u8] =
+    b"seeecret prefix omggggggggg!!!!111111owowowojsadoifj";
+
 fn oracle14(input: &[u8]) -> Vec<u8> {
-    let mut buf = b"seeecret prefix omggggggggg!!!!111111owowowojsadoifj".to_vec();
+    let mut buf = SECRET_PREFIX_14.to_vec();
     buf.extend_from_slice(input);
     let suffix = INPUT12.from_base64().unwrap();
     buf.extend_from_slice(&suffix);
@@ -305,8 +308,36 @@ fn oracle14(input: &[u8]) -> Vec<u8> {
     return padded_buf
 }
 
+fn first_different_ciphertext_byte(const_prefix_len: usize) -> usize {
+    // This doesn't actually work if the plaintext suffix starts with 'A'. In reality we'd want to
+    // try multiple differeny bytes.
+    let mut input = vec![b'A'; const_prefix_len + 1];
+    let ciphertext1 = oracle14(&input);
+    input[const_prefix_len] = b'B';
+    let ciphertext2 = oracle14(&input);
+    for i in 0..ciphertext1.len() {
+        if ciphertext1[i] != ciphertext2[i] {
+            return i;
+        }
+    }
+    unreachable!();
+}
+
+fn determine_prefix_len() -> usize {
+    let starter_different_byte = first_different_ciphertext_byte(0);
+    for i in 1.. {
+        let next_different_byte = first_different_ciphertext_byte(i);
+        if next_different_byte != starter_different_byte {
+            return next_different_byte - i;
+        }
+    }
+    unreachable!();
+}
+
 fn challenge14() {
-    oracle14(b"this is my message");
+    let prefix_len = determine_prefix_len();
+    assert_eq!(prefix_len, SECRET_PREFIX_14.len());
+    println!("prefix len: {}", prefix_len);
 }
 
 fn main() {

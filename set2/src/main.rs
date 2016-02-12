@@ -30,6 +30,17 @@ fn unpad(buf: &[u8]) -> &[u8] {
     return &buf[0..padding_start];
 }
 
+fn unpad_or_error(buf: &[u8]) -> Result<&[u8], ()> {
+    let padding_val = buf[buf.len()-1];
+    let padding_start = buf.len() - padding_val as usize;
+    for i in padding_start..buf.len() {
+        if buf[i] != padding_val {
+            return Err(());
+        }
+    }
+    return Ok(&buf[0..padding_start]);
+}
+
 fn xor_into(dest: &mut [u8], mask: &[u8]) {
     assert_eq!(dest.len(), mask.len());
     for i in 0..dest.len() {
@@ -380,6 +391,14 @@ fn challenge14() {
     print!("{}", std::str::from_utf8(&plaintext).unwrap());
 }
 
+fn challenge15() {
+    println!("challenge 15");
+    let good_padding = b"YELLOW SUBMARI\x02\x02";
+    assert_eq!(Ok(b"YELLOW SUBMARI" as &[u8]), unpad_or_error(good_padding));
+    let bad_padding = b"YELLOW SUBMARI\x03\x03";
+    assert_eq!(Err(()), unpad_or_error(bad_padding));
+}
+
 fn main() {
     challenge9();
     challenge10();
@@ -387,4 +406,5 @@ fn main() {
     challenge12();
     challenge13();
     challenge14();
+    challenge15();
 }

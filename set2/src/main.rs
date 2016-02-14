@@ -32,6 +32,7 @@ fn unpad(buf: &[u8]) -> &[u8] {
 
 fn unpad_or_error(buf: &[u8]) -> Result<&[u8], ()> {
     let padding_val = buf[buf.len()-1];
+    assert!(padding_val as usize <= buf.len());
     let padding_start = buf.len() - padding_val as usize;
     for i in padding_start..buf.len() {
         if buf[i] != padding_val {
@@ -399,6 +400,46 @@ fn challenge15() {
     assert_eq!(Err(()), unpad_or_error(bad_padding));
 }
 
+const CHALLENGE16_KEY: &'static [u8] = b"seeeeeeeeeeecret";
+
+fn encrypt_userdata(userdata: &[u8]) -> Vec<u8> {
+    let mut input = b"comment1=cooking%20MCs;userdata=".to_vec();
+    let mut userdata = userdata.to_vec();
+    // Escape the userdata.
+    for i in 0..userdata.len() {
+        if userdata[i] == b';' || userdata[i] == b'=' {
+            userdata[i] = b'_';
+        }
+    }
+    input.extend_from_slice(&userdata);
+    input.extend_from_slice(b";comment2=%20like%20a%20pound%20of%20bacon");
+    let mut padded_input = pad(&input, 16);
+    aes_cbc_encrypt(&mut padded_input, CHALLENGE16_KEY);
+    padded_input
+}
+
+fn is_encrypted_admin(ciphertext: &[u8]) -> bool {
+    let mut ciphertext = ciphertext.to_vec();
+    aes_cbc_decrypt(&mut ciphertext, CHALLENGE16_KEY);
+    let plaintext = unpad_or_error(&ciphertext);
+    if let Err(_) = plaintext {
+        return false;
+    }
+    let plaintext_str = std::str::from_utf8(plaintext.unwrap());
+    if let Err(_) = plaintext_str {
+        return false;
+    }
+    plaintext_str.unwrap().contains(";admin=true;")
+}
+
+fn challenge16() {
+    println!("challenge 16");
+    let example = b"foo;bar;admin=true;baz";
+    let mut ciphertext = pad(example, 16);
+    aes_cbc_encrypt(&mut ciphertext, CHALLENGE16_KEY);
+    assert!(is_encrypted_admin(&ciphertext));
+}
+
 fn main() {
     challenge9();
     challenge10();
@@ -407,4 +448,5 @@ fn main() {
     challenge13();
     challenge14();
     challenge15();
+    challenge16();
 }

@@ -425,18 +425,19 @@ fn is_encrypted_admin(ciphertext: &[u8]) -> bool {
     if let Err(_) = plaintext {
         return false;
     }
-    let plaintext_str = std::str::from_utf8(plaintext.unwrap());
-    if let Err(_) = plaintext_str {
-        return false;
-    }
-    plaintext_str.unwrap().contains(";admin=true;")
+    let plaintext_str = String::from_utf8_lossy(plaintext.unwrap());
+    println!("plaintext string: {:?}", plaintext_str);
+    plaintext_str.contains(";admin=true;")
 }
 
 fn challenge16() {
     println!("challenge 16");
-    let example = b"foo;bar;admin=true;baz";
-    let mut ciphertext = pad(example, 16);
-    aes_cbc_encrypt(&mut ciphertext, CHALLENGE16_KEY);
+    let next_block = b";comment2=%20lik";
+    let wanted_block = b"blah;admin=true;";
+    let mut ciphertext = encrypt_userdata(&[0; 16]);
+    for i in 0..16 {
+        ciphertext[i + 32] ^= next_block[i] ^ wanted_block[i];
+    }
     assert!(is_encrypted_admin(&ciphertext));
 }
 

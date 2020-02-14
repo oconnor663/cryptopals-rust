@@ -1,6 +1,7 @@
 use arrayref::array_ref;
 use block_cipher_trait::BlockCipher;
 use rand::{thread_rng, Rng};
+use std::collections::HashMap;
 use std::str::from_utf8;
 
 fn pad(input: &[u8], block_len: usize) -> Vec<u8> {
@@ -15,7 +16,7 @@ fn pad(input: &[u8], block_len: usize) -> Vec<u8> {
 fn unpad(input: &[u8], block_len: usize) -> &[u8] {
     let last = *input.last().unwrap();
     assert!(last != 0);
-    assert!(last as usize <= block_len);
+    assert!(last as usize <= block_len, "invalid padding byte {}", last);
     for i in input.len() - last as usize..input.len() {
         assert_eq!(input[i], last);
     }
@@ -52,6 +53,15 @@ fn ecb_encrypt(key: &[u8; 16], input: &[u8]) -> Vec<u8> {
         aes128_encrypt_block(key, block);
     }
     out
+}
+
+fn ecb_decrypt(key: &[u8; 16], ciphertext: &[u8]) -> Vec<u8> {
+    assert_eq!(ciphertext.len() % 16, 0);
+    let mut padded_plaintext = ciphertext.to_vec();
+    for block in padded_plaintext.chunks_exact_mut(16) {
+        aes128_decrypt_block(key, block);
+    }
+    unpad(&padded_plaintext, 16).to_vec()
 }
 
 fn cbc_encrypt(key: &[u8; 16], iv: &[u8], input: &[u8]) -> Vec<u8> {
@@ -133,6 +143,37 @@ fn encryption_oracle_12(input: &[u8]) -> Vec<u8> {
     ecb_encrypt(&key, &plaintext)
 }
 
+fn parse_props(input: &str) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for pair in input.split('&') {
+        let mut parts = pair.split('=');
+        let key = parts.next().unwrap();
+        let val = parts.next().unwrap();
+        assert_eq!(parts.next(), None);
+        assert!(!map.contains_key(key));
+        map.insert(key.to_owned(), val.to_owned());
+    }
+    map
+}
+
+fn profile_for(address: &str) -> String {
+    assert!(!address.contains('&'));
+    assert!(!address.contains('='));
+    format!("email={}&uid=10&role=user", address)
+}
+
+fn encrypt_profile_for(address: &str) -> Vec<u8> {
+    let key = b"secret key!!!!!!";
+    let profile = profile_for(address);
+    ecb_encrypt(key, profile.as_bytes())
+}
+
+fn decrypt_profile(ciphertext: &[u8]) -> HashMap<String, String> {
+    let key = b"secret key!!!!!!";
+    let plaintext = ecb_decrypt(key, ciphertext);
+    parse_props(from_utf8(&plaintext).unwrap())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 9
     assert_eq!(
@@ -194,6 +235,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     assert!(plaintext == expected_answer_dont_look);
     println!("===== challenge 12 =====\n{}", from_utf8(&plaintext)?);
+
+    // Challenge 13
+    let ciphertext = encrypt_profile_for("foo@bar.com");
+    let out = decrypt_profile(&ciphertext);
+    assert_eq!(out.get("email").unwrap(), "foo@bar.com");
+    assert_eq!(out.get("uid").unwrap(), "10");
+    assert_eq!(out.get("role").unwrap(), "user");
+    // pick an email that makes "role=" sit right at the end of the second block.
+    let role_eq_text = encrypt_profile_for("foooo@bar.com");
+    let role_eq_prefix = &role_eq_text[..32];
+    // pick an email that puts "admin" and then valid padding in the second block.
+    let admin_text =
+        encrypt_profile_for("AAAAAAAAAAadmin\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b");
+    let admin_suffix = &admin_text[16..32];
+    let mut attacker_ciphertext = role_eq_prefix.to_vec();
+    attacker_ciphertext.extend_from_slice(admin_suffix);
+    let attacker_out = decrypt_profile(&attacker_ciphertext);
+    // dbg!(&attacker_out);
+    assert_eq!(attacker_out.get("email").unwrap(), "foooo@bar.com");
+    assert_eq!(attacker_out.get("uid").unwrap(), "10");
+    assert_eq!(attacker_out.get("role").unwrap(), "admin");
 
     Ok(())
 }

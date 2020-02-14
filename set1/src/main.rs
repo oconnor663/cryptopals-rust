@@ -1,3 +1,5 @@
+use std::str::from_utf8;
+
 fn xor(buf: &mut [u8], mask: &[u8]) {
     assert_eq!(buf.len(), mask.len());
     for (b, m) in buf.iter_mut().zip(mask.iter()) {
@@ -54,6 +56,22 @@ fn repeating_key_xor(key: &[u8], input: &[u8]) -> Vec<u8> {
         out[i] ^= key[i % key.len()];
     }
     out
+}
+
+const INPUT_6: &str = include_str!("../input/6.txt");
+
+fn hamming_byte(b1: u8, b2: u8) -> u64 {
+    (b1 ^ b2).count_ones() as u64
+}
+
+fn hamming(input1: &[u8], input2: &[u8]) -> u64 {
+    assert_eq!(input1.len(), input2.len());
+    input1
+        .iter()
+        .copied()
+        .zip(input2.iter().copied())
+        .map(|(a, b)| hamming_byte(a, b))
+        .sum()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -130,6 +148,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         hex::encode(&repeating_key_xor(b"ICE", input.as_bytes())),
         "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
     );
+
+    // challenge 6
+    assert_eq!(hamming(b"this is a test", b"wokka wokka!!!"), 37);
+    let bytes = base64::decode(&INPUT_6.replace("\n", ""))?;
+    let mut best_keysize = 0;
+    let mut lowest_distance = u64::max_value();
+    for keysize in 2..=40 {
+        let mut distance = 0;
+        let mut last_chunk = &[][..];
+        for chunk in bytes.chunks(keysize) {
+            if !last_chunk.is_empty() {
+                distance += hamming(&last_chunk[..chunk.len()], chunk);
+            }
+            last_chunk = chunk;
+        }
+        if distance < lowest_distance {
+            lowest_distance = distance;
+            best_keysize = keysize
+        }
+    }
+    let mut key = vec![0; best_keysize];
+    for key_i in 0..key.len() {
+        let strided_bytes: Vec<u8> = bytes[key_i..].iter().copied().step_by(key.len()).collect();
+        let mut best_score = 0f32;
+        let mut best_key_byte = 0;
+        for candidate in 0..=255 {
+            let mut buf = strided_bytes.clone();
+            let mask = vec![candidate; buf.len()];
+            xor(&mut buf, &mask);
+            let score = score(&buf);
+            if score > best_score {
+                best_score = score;
+                best_key_byte = candidate;
+            }
+        }
+        key[key_i] = best_key_byte;
+    }
+    println!("challenge 6 key: {:?}", from_utf8(&key)?);
+    let decrypted = repeating_key_xor(&key, &bytes);
+    println!("{}", from_utf8(&decrypted)?);
 
     Ok(())
 }

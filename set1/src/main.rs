@@ -88,6 +88,8 @@ fn aes128_ecb_decrypt(key: &[u8; 16], buf: &mut [u8]) {
     }
 }
 
+const INPUT_8: &str = include_str!("../input/8.txt");
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // challenge 1
     let hex_string = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -213,6 +215,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     aes128_ecb_decrypt(b"YELLOW SUBMARINE", &mut decrypted);
     println!("challenge 7");
     println!("{}", from_utf8(&decrypted)?);
+
+    // Challenge 8
+    println!("challenge 8");
+    for (i, line) in INPUT_8.split_whitespace().enumerate() {
+        let buf = base64::decode(line)?;
+        let mut block_set = std::collections::HashSet::new();
+        for chunk in buf.chunks_exact(16) {
+            if block_set.contains(chunk) {
+                println!("duplicate found in line {}", i);
+            }
+            block_set.insert(chunk);
+        }
+    }
 
     Ok(())
 }

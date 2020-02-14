@@ -1,5 +1,6 @@
 use arrayref::array_ref;
 use block_cipher_trait::BlockCipher;
+use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 use std::collections::HashMap;
 use std::str::from_utf8;
@@ -174,6 +175,32 @@ fn decrypt_profile(ciphertext: &[u8]) -> HashMap<String, String> {
     parse_props(from_utf8(&plaintext).unwrap())
 }
 
+fn encryption_oracle_14(input: &[u8]) -> Vec<u8> {
+    static PREFIX: Lazy<Vec<u8>> = Lazy::new(|| {
+        let mut rng = rand::thread_rng();
+        let len = rng.gen_range(1, 100);
+        dbg!(len);
+        let mut prefix = vec![0; len];
+        rng.fill(&mut prefix[..]);
+        prefix
+    });
+    let key = b"secret key!!!!!!";
+    let suffix = base64::decode(SECRET_B64_12).unwrap();
+    let mut plaintext = PREFIX.to_vec();
+    plaintext.extend_from_slice(input);
+    plaintext.extend_from_slice(&suffix);
+    ecb_encrypt(&key, &plaintext)
+}
+
+fn first_indentical_index(input: &[u8]) -> usize {
+    assert_eq!(input.len() % 16, 0);
+    let mut first_identical = 0;
+    while &input[first_identical..][..16] != &input[first_identical + 16..][..16] {
+        first_identical += 16;
+    }
+    first_identical
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 9
     assert_eq!(
@@ -256,6 +283,62 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(attacker_out.get("email").unwrap(), "foooo@bar.com");
     assert_eq!(attacker_out.get("uid").unwrap(), "10");
     assert_eq!(attacker_out.get("role").unwrap(), "admin");
+
+    // Challenge 14
+    println!("=========== challenge 14 ===============");
+    // first we need to figure out the length of the random prefix. Encrypt a
+    // lot of zeros and look for the first two blocks that match.
+    let zeros_out = encryption_oracle_14(&[0; 100]);
+    let first_identical = first_indentical_index(&zeros_out);
+    assert!(first_identical != 0, "meh, don't bother handling this case");
+    // Now figure out the earliest char we can change in the zeros input, while
+    // keeping the block *just before* two identical blocks unchanged. That
+    // tells us how many input bytes wound up in that block, which gives us the
+    // prefix length.
+    let before_block = &zeros_out[first_identical - 16..first_identical];
+    let mut i = 0;
+    loop {
+        assert!(i < 16);
+        let mut zeros = [0; 100];
+        zeros[i] = 1;
+        let tweaked_out = encryption_oracle_14(&zeros);
+        if &tweaked_out[first_identical - 16..first_identical] == before_block {
+            break;
+        }
+        i += 1;
+    }
+    let random_prefix_len = first_identical - i;
+    dbg!(random_prefix_len);
+    // Now adapt the decryption code.
+    let extra_fixed_prefix_len = 16 - (random_prefix_len % 16);
+    let total_fixed_prefix_len = random_prefix_len + extra_fixed_prefix_len;
+    assert_eq!(total_fixed_prefix_len % 16, 0);
+    let mut plaintext_14 = Vec::new();
+    while plaintext_14.len() < expected_answer_dont_look.len() {
+        let variable_prefix_len = 15 - (plaintext_14.len() % 16);
+        let input = vec!['A' as u8; extra_fixed_prefix_len + variable_prefix_len];
+        let output = encryption_oracle_14(&input);
+        let mut candidate_input = input.clone();
+        candidate_input.extend_from_slice(&plaintext_14);
+        candidate_input.push(0);
+        let observe_len = candidate_input.len() + random_prefix_len;
+        let mut found = false;
+        for candidate_byte in 0..=255 {
+            *candidate_input.last_mut().unwrap() = candidate_byte;
+            // dbg!(String::from_utf8_lossy(&candidate_input));
+            assert_eq!((random_prefix_len + candidate_input.len()) % 16, 0);
+            let candidate_out = encryption_oracle_14(&candidate_input);
+            if &output[..observe_len] == &candidate_out[..observe_len] {
+                // println!("got a byte: {:?}", candidate_byte as char);
+                plaintext_14.push(candidate_byte);
+                found = true;
+                break;
+            }
+        }
+        assert!(found);
+    }
+    assert!(plaintext_14 == expected_answer_dont_look);
+    println!("{}", from_utf8(&plaintext_14)?);
 
     Ok(())
 }

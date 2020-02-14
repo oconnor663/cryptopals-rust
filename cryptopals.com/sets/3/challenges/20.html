@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 20 Set 3 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../3.html'>Set 3</a>
+            </li>
+            <li class='active'>
+              <a href='20.html'>Challenge 20</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Break fixed-nonce CTR statistically</h3>
+          <p>
+  <a href='../../../static/challenge-data/20.txt'>In this file</a>
+  find a similar set of Base64'd plaintext. Do with them exactly
+  what you did with the first, but solve the problem differently.
+</p>
+<p>
+  Instead of making spot guesses at to known plaintext, treat the
+  collection of ciphertexts the same way you would repeating-key
+  XOR.
+</p>
+<p>
+  Obviously, CTR encryption appears different from repeated-key XOR,
+  <i>but with a fixed nonce they are effectively the same thing.</i>
+</p>
+<p>
+  To exploit this: take your collection of ciphertexts and truncate
+  them to a common length (the length of the smallest ciphertext will
+  work).
+</p>
+<p>
+  Solve the resulting concatenation of ciphertexts as if for repeating-
+  key XOR, with a key size of the length of the ciphertext you XOR'd.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

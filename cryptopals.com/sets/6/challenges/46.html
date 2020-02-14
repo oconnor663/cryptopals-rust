@@ -1,0 +1,141 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 46 Set 6 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../6.html'>Set 6</a>
+            </li>
+            <li class='active'>
+              <a href='46.html'>Challenge 46</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>RSA parity oracle</h3>
+          <div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>When does this ever happen?</h3>
+  </div>
+  <div class='panel-body'>
+    This is a bit of a toy problem, but it's very helpful for
+    understanding what RSA is doing (and also for why pure
+    number-theoretic encryption is terrifying). Trust us, you
+    want to do this before trying the next challenge. Also,
+    it's fun.
+  </div>
+</div>
+<p>
+  Generate a 1024 bit RSA key pair.
+</p>
+<p>
+  Write an oracle function that uses the private key to answer the
+  question "is the plaintext of this message even or odd" (is the last
+  bit of the message 0 or 1). Imagine for instance a server that
+  accepted RSA-encrypted messages and checked the parity of their
+  decryption to validate them, and spat out an error if they were of the
+  wrong parity.
+</p>
+<p>
+  Anyways: function returning true or false based on whether the
+  decrypted plaintext was even or odd, and nothing else.
+</p>
+<p>
+  Take the following string and un-Base64 it in your code (without
+  looking at it!) and encrypt it to the public key, creating a
+  ciphertext:
+</p>
+<pre>VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==</pre>
+<p>
+  With your oracle function, you can trivially decrypt the message.
+</p>
+<p>
+  Here's why:
+</p>
+<ul>
+  <li>
+    RSA ciphertexts are just numbers. You can do trivial math on
+    them. You can for instance multiply a ciphertext by the
+    RSA-encryption of another number; the corresponding plaintext will
+    be the product of those two numbers.
+  </li>
+  <li>
+    If you double a ciphertext (multiply it by (2**e)%n), the resulting
+    plaintext will (obviously) be either even or odd.
+  </li>
+  <li>
+    If the plaintext after doubling is even, doubling the plaintext
+    <i>didn't wrap the modulus</i> --- the modulus is a prime number. That
+    means the plaintext is less than half the modulus.
+  </li>
+</ul>
+<p>
+  You can repeatedly apply this heuristic, once per bit of the message,
+  checking your oracle function each time.
+</p>
+<p>
+  Your decryption function starts with bounds for the plaintext of [0,n].
+</p>
+<p>
+  Each iteration of the decryption cuts the bounds in half; either the
+  upper bound is reduced by half, or the lower bound is.
+</p>
+<p>
+  After log2(n) iterations, you have the decryption of the message.
+</p>
+<p>
+  Print the upper bound of the message as a string at each iteration;
+  you'll see the message decrypt "hollywood style".
+</p>
+<p>
+  Decrypt the string (after encrypting it to a hidden private key) above.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

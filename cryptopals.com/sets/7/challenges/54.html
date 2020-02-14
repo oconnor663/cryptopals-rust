@@ -1,0 +1,152 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 54 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='54.html'>Challenge 54</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Kelsey and Kohno's Nostradamus Attack</h3>
+          <p>
+  Hash functions are sometimes used as proof of a secret prediction.
+</p>
+<p>
+  For example, suppose you wanted to predict the score of every Major
+  League Baseball game in a season. (2,430 in all.) You might be
+  concerned that publishing your predictions would affect the
+  outcomes.
+</p>
+<p>
+  So instead you write down all the scores, hash the document, and
+  publish the hash. Once the season is over, you publish the
+  document. Everyone can then hash the document to verify your
+  soothsaying prowess.
+</p>
+<p>
+  But what if you can't accurately predict the scores of 2.4k baseball
+  games? Have no fear - forging a prediction under this scheme reduces
+  to another second preimage attack.
+</p>
+<p>
+  We could apply the long message attack from the previous problem, but
+  it would look pretty shady. Would you trust someone whose predicted
+  message turned out to be 2^50 bytes long?
+</p>
+<p>
+  It turns out we can run a successful attack with a much shorter
+  suffix. Check the method:
+</p>
+<ol>
+  <li>
+    Generate a large number of initial hash states. Say, 2^k.
+  </li>
+  <li>
+    Pair them up and generate single-block collisions. Now you have
+    2^k hash states that collide into 2^(k-1) states.
+  </li>
+  <li>
+    Repeat the process. Pair up the 2^(k-1) states and generate
+    collisions. Now you have 2^(k-2) states.
+  </li>
+  <li>
+    Keep doing this until you have one state. This is your
+    prediction.
+  </li>
+  <li>
+    Well, sort of. You need to commit to some length to encode in the
+    padding. Make sure it's long enough to accommodate your actual
+    message, this suffix, and a little bit of glue to join them
+    up. Hash this padding block using the state from step 4 - THIS is
+    your prediction.
+  </li>
+</ol>
+<p>
+  What did you just build? It's basically a funnel mapping many initial
+  states into a common final state. What's critical is we now have a big
+  field of 2^k states we can try to collide into, but the actual suffix
+  will only be k+1 blocks long.
+</p>
+<p>
+  The rest is trivial:
+</p>
+<ol>
+  <li>
+    Wait for the end of the baseball season. (This may take some
+    time.)
+  </li>
+  <li>
+    Write down the game results. Or, you know, anything else. I'm not
+    too particular.
+  </li>
+  <li>
+    Generate enough glue blocks to get your message length right. The
+    last block should collide into one of the leaves in your
+    tree.
+  </li>
+  <li>
+    Follow the path from the leaf all the way up to the root node and
+    build your suffix using the message blocks along the way.
+  </li>
+</ol>
+<p>
+  The difficulty here will be around 2^(b-k). By increasing or
+  decreasing k in the tree generation phase, you can tune the difficulty
+  of this step. It probably makes sense to do more work up-front, since
+  people will be waiting on you to supply your message once the event
+  passes. Happy prognosticating!
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

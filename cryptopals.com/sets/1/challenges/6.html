@@ -1,0 +1,154 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 6 Set 1 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../1.html'>Set 1</a>
+            </li>
+            <li class='active'>
+              <a href='6.html'>Challenge 6</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Break repeating-key XOR</h3>
+          <style>
+  li { 
+    padding-top: 1em;
+  }
+</style>
+<div class='panel panel-danger'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>It is officially on, now.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      This challenge isn't conceptually hard, but it involves actual error-prone
+      coding. The other challenges in this set are there to bring you up to speed.
+      This one is there to <b>qualify</b> you. If you can do this one, you're
+      probably just fine up to Set 6.
+    </p>
+  </div>
+</div>
+<p>
+  <a href='../../../static/challenge-data/6.txt'>There's a file here.</a>
+  It's been base64'd after being encrypted with repeating-key XOR.
+</p>
+<p>
+  Decrypt it.
+</p>
+<p>
+  Here's how:
+</p>
+<ol>
+  <li>
+    Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
+  </li>
+  <li>
+    Write a function to compute the edit distance/Hamming distance
+    between two strings. <i>The Hamming distance is just the number of
+    differing bits.</i> The distance between:
+    <pre>this is a test</pre>
+    and
+    <pre>wokka wokka!!!</pre>
+    is
+    <b>37.</b>
+    <i>Make sure your code agrees before you proceed.</i>
+  </li>
+  <li>
+    For each KEYSIZE, take the <i>first</i> KEYSIZE worth of bytes, and the
+    <i>second</i> KEYSIZE worth of bytes, and find the edit distance between
+    them. Normalize this result by dividing by KEYSIZE.
+  </li>
+  <li>
+    The KEYSIZE with the smallest normalized edit distance is probably
+    the key. You could proceed perhaps with the smallest 2-3 KEYSIZE
+    values. Or take 4 KEYSIZE blocks instead of 2 and average the
+    distances.
+  </li>
+  <li>
+    Now that you probably know the KEYSIZE: break the ciphertext into
+    blocks of KEYSIZE length.
+  </li>
+  <li>
+    Now transpose the blocks: make a block that is the first byte of
+    every block, and a block that is the second byte of every block, and
+    so on.
+  </li>
+  <li>
+    Solve each block as if it was single-character XOR. You already
+    have code to do this.
+  </li>
+  <li>
+    For each block, the single-byte XOR key that produces the best
+    looking histogram is the repeating-key XOR key byte for that
+    block. Put them together and you have the key.
+  </li>
+</ol>
+<p>
+  This code is going to turn out to be surprisingly useful later on. Breaking repeating-key XOR ("Vigenere") statistically
+  is obviously an academic exercise, a "Crypto 101" thing. But more people "know how" to break it than can <i>actually break it</i>,
+  and a similar technique breaks something much more important.
+</p>
+<div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>No, that's not a mistake.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      We get more tech support questions for this challenge than any of the other ones. We promise,
+      there aren't any blatant errors in this text. In particular: the "wokka wokka!!!" edit distance
+      really is 37.
+    </p>
+  </div>
+</div>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

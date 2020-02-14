@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 40 Set 5 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../5.html'>Set 5</a>
+            </li>
+            <li class='active'>
+              <a href='40.html'>Challenge 40</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Implement an E=3 RSA Broadcast attack</h3>
+          <p>
+  Assume you're a Javascript programmer. That is, you're using a
+  naive handrolled RSA to encrypt without padding.
+</p>
+<p>
+  Assume you can be coerced into encrypting the same plaintext
+  three times, under three different public keys. You can; it's
+  happened.
+</p>
+<p>
+  Then an attacker can trivially decrypt your message, by:
+</p>
+<ol>
+  <li>Capturing any 3 of the ciphertexts and their corresponding pubkeys</li>
+  <li>
+    Using the CRT to solve for the number represented by the three
+    ciphertexts (which are residues mod their respective pubkeys)
+  </li>
+  <li>Taking the cube root of the resulting number</li>
+</ol>
+<p>
+  The CRT says you can take any number and represent it as the
+  combination of a series of residues mod a series of moduli. In the
+  three-residue case, you have:
+</p>
+<pre>result =
+  (c_0 * m_s_0 * invmod(m_s_0, n_0)) +
+  (c_1 * m_s_1 * invmod(m_s_1, n_1)) +
+  (c_2 * m_s_2 * invmod(m_s_2, n_2)) mod N_012</pre>
+<p>
+  where:
+</p>
+<pre> c_0, c_1, c_2 are the three respective residues mod
+ n_0, n_1, n_2
+
+ m_s_n (for n in 0, 1, 2) are the product of the moduli
+ EXCEPT n_n --- ie, m_s_1 is n_0 * n_2
+
+ N_012 is the product of all three moduli</pre>
+<p>
+  To decrypt RSA using a simple cube root, leave off the
+  final modulus operation; just take the raw accumulated result and
+  cube-root it.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

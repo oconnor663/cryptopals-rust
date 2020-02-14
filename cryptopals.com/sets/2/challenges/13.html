@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 13 Set 2 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../2.html'>Set 2</a>
+            </li>
+            <li class='active'>
+              <a href='13.html'>Challenge 13</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>ECB cut-and-paste</h3>
+          <p>
+  Write a k=v parsing routine, as if for a structured cookie. The
+  routine should take:
+</p>
+<pre>foo=bar&baz=qux&zap=zazzle</pre>
+<p>
+  ... and produce:
+</p>
+<pre>{
+  foo: 'bar',
+  baz: 'qux',
+  zap: 'zazzle'
+}</pre>
+<p>
+  (you know, the object; I don't care if you convert it to JSON).
+</p>
+<p>
+  Now write a function that encodes a user profile in that format, given
+  an email address. You should have something like:
+</p>
+<pre>profile_for("foo@bar.com")</pre>
+<p>
+  ... and it should produce:
+</p>
+<pre>{
+  email: 'foo@bar.com',
+  uid: 10,
+  role: 'user'
+}</pre>
+<p>
+  ... encoded as:
+</p>
+<pre>email=foo@bar.com&uid=10&role=user</pre>
+<p>
+  Your "profile_for" function should <i>not</i> allow encoding metacharacters
+  (& and =). Eat them, quote them, whatever you want to do, but don't
+  let people set their email address to "foo@bar.com&role=admin".
+</p>
+<p>
+  Now, two more easy functions. Generate a random AES key, then:
+</p>
+<ol type='A'>
+  <li>Encrypt the encoded user profile under the key; "provide" that to the "attacker".</li>
+  <li>Decrypt the encoded user profile and parse it.</li>
+</ol>
+<p>
+  Using only the user input to profile_for() (as an oracle to generate
+  "valid" ciphertexts) and the ciphertexts themselves, make a role=admin
+  profile.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

@@ -1,0 +1,43 @@
+.flite {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 300; 
+  font-style: normal;
+}
+
+.fbook {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 400; 
+  font-style: normal;
+}
+
+.fbookitalic {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 400; 
+  font-style: italic;
+}
+
+.fbold {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 700; 
+  font-style: normal;
+}
+
+.fblack {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 800; 
+  font-style: normal;
+}
+
+body {
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 400; 
+  font-style: normal;
+}
+
+h1, h2, h3, h4 { 
+  font-family: 'Sentinel SSm A', 'Sentinel SSm B'; 
+  font-weight: 800; 
+  font-style: normal;
+}
+
+body { padding-top: 70px; }

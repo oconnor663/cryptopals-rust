@@ -1,0 +1,155 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 51 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='51.html'>Challenge 51</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Compression Ratio Side-Channel Attacks</h3>
+          <p>
+  Internet traffic is often compressed to save bandwidth. Until
+  recently, this included HTTPS headers, and it still includes the
+  contents of responses.
+</p>
+<p>
+  Why does that matter?
+</p>
+<p>
+  Well, if you're an attacker with:
+</p>
+<ol>
+  <li>Partial plaintext knowledge <i>and</i></li>
+  <li>Partial plaintext control <i>and</i></li>
+  <li>Access to a compression oracle</li>
+</ol>
+<p>
+  You've got a pretty good chance to recover any additional unknown
+  plaintext.
+</p>
+<p>
+  What's a compression oracle? You give it some input and it tells you
+  how well the full message compresses, i.e. the length of the resultant
+  output.
+</p>
+<p>
+  This is somewhat similar to the timing attacks we did way back in set
+  4 in that we're taking advantage of incidental side channels rather
+  than attacking the cryptographic mechanisms themselves.
+</p>
+<p>
+  Scenario: you are running a MITM attack with an eye towards stealing
+  secure session cookies. You've injected malicious content allowing you
+  to spawn arbitrary requests and observe them in flight. (The
+  particulars aren't terribly important, just roll with it.)
+</p>
+<p>
+  So! Write this oracle:
+</p>
+<pre>oracle(P) -> length(encrypt(compress(format_request(P))))</pre>
+<p>
+  Format the request like this:
+</p>
+<pre>POST / HTTP/1.1
+Host: hapless.com
+Cookie: sessionid=TmV2ZXIgcmV2ZWFsIHRoZSBXdS1UYW5nIFNlY3JldCE=
+Content-Length: ((len(P)))
+((P))</pre>
+<p>
+  (Pretend you can't see that session id. You're the attacker.)
+</p>
+<p>
+  Compress using zlib or whatever.
+</p>
+<p>
+  Encryption... is actually kind of irrelevant for our purposes, but be
+  a sport. Just use some stream cipher. Dealer's choice. Random key/IV
+  on every call to the oracle.
+</p>
+<p>
+  And then just return the length in bytes.
+</p>
+<p>
+  Now, the idea here is to leak information using the compression
+  library. A payload of "sessionid=T" should compress just a little bit
+  better than, say, "sessionid=S".
+</p>
+<p>
+  There is one complicating factor. The DEFLATE algorithm operates in
+  terms of individual bits, but the final message length will be in
+  bytes. Even if you do find a better compression, the difference may
+  not cross a byte boundary. So that's a problem.
+</p>
+<p>
+  You may also get some incidental false positives.
+</p>
+<p>
+  But don't worry! I have full confidence in you.
+</p>
+<p>
+  Use the compression oracle to recover the session id.
+</p>
+<p>
+  I'll wait.
+</p>
+<p>
+  Got it? Great.
+</p>
+<p>
+  Now swap out your stream cipher for CBC and do it again.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

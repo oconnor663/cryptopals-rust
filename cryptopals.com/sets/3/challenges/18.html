@@ -1,0 +1,122 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 18 Set 3 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../3.html'>Set 3</a>
+            </li>
+            <li class='active'>
+              <a href='18.html'>Challenge 18</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Implement CTR, the stream cipher mode</h3>
+          <p>The string:</p>
+<pre>L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==</pre>
+<p>
+  ... decrypts to something approximating English in CTR mode, which is an
+  AES block cipher mode that turns AES into a stream cipher, with the
+  following parameters:
+</p>
+<pre>      key=YELLOW SUBMARINE
+      nonce=0
+      format=64 bit unsigned little endian nonce,
+             64 bit little endian block count (byte count / 16)</pre>
+<p>CTR mode is very simple.</p>
+<p>
+  Instead of encrypting the plaintext, CTR mode encrypts a running
+  counter, producing a 16 byte block of keystream, which is XOR'd
+  against the plaintext.
+</p>
+<p>
+  For instance, for the first 16 bytes of a message with these
+  parameters:
+</p>
+<pre>keystream = AES("YELLOW SUBMARINE",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")</pre>
+<p>
+  ... for the next 16 bytes:
+</p>
+<pre>keystream = AES("YELLOW SUBMARINE",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00")</pre>
+<p>
+  ... and then:
+</p>
+<pre>keystream = AES("YELLOW SUBMARINE",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00")</pre>
+<p>
+  CTR mode does not require padding; when you run out of plaintext, you
+  just stop XOR'ing keystream and stop generating keystream.
+</p>
+<p>
+  Decryption is identical to encryption. Generate the same keystream,
+  XOR, and recover the plaintext.
+</p>
+<p>
+  Decrypt the string at the top of this function, then use your CTR
+  function to encrypt and decrypt other things.
+</p>
+<div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>This is the only block cipher mode that matters in good code.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      Most modern cryptography relies on CTR mode to adapt block ciphers into stream ciphers,
+      because most of what we want to encrypt is better described as a stream than as a sequence
+      of blocks. Daniel Bernstein once quipped to Phil Rogaway that good cryptosystems don't need the
+      "decrypt" transforms. Constructions like CTR are what he was talking about.
+    </p>
+  </div>
+</div>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

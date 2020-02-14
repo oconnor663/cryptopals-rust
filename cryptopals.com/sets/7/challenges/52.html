@@ -1,0 +1,166 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 52 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='52.html'>Challenge 52</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Iterated Hash Function Multicollisions</h3>
+          <p>
+  While we're on the topic of hash functions...
+</p>
+<p>
+  The major feature you want in your hash function is
+  collision-resistance. That is, it should be hard to generate
+  collisions, and it should be <i>really</i> hard to generate a collision for a
+  given hash (<i>aka</i> preimage).
+</p>
+<p>
+  Iterated hash functions have a problem: the effort to generate <i>lots</i> of
+  collisions scales sublinearly.
+</p>
+<p>
+  What's an iterated hash function? For all intents and purposes, we're
+  talking about the Merkle-Damgard construction. It looks like this:
+</p>
+<pre>function MD(M, H, C):
+  for M[i] in pad(M):
+    H := C(M[i], H)
+  return H</pre>
+<p>
+  For message M, initial state H, and compression function C.
+</p>
+<p>
+  This should look really familiar, because SHA-1 and MD4 are both in
+  this category. What's cool is you can use this formula to build a
+  makeshift hash function out of some spare crypto primitives you have
+  lying around (e.g. C = AES-128).
+</p>
+<p>
+  Back on task: the cost of collisions scales sublinearly. What does
+  that mean? If it's feasible to find one collision, it's probably
+  feasible to find a lot.
+</p>
+<p>
+  How? For a given state H, find two blocks that collide. Now take the
+  resulting hash from this collision as your new H and repeat. Recognize
+  that with each iteration you can actually double your collisions by
+  subbing in either of the two blocks for that slot.
+</p>
+<p>
+  This means that if finding two colliding messages takes 2^(b/2) work
+  (where b is the bit-size of the hash function), then finding 2^n
+  colliding messages only takes n*2^(b/2) work.
+</p>
+<p>
+  Let's test it. First, build your own MD hash function. We're going to
+  be generating a LOT of collisions, so don't knock yourself out. In
+  fact, go out of your way to make it bad. Here's one way:
+</p>
+<ol>
+  <li>Take a fast block cipher and use it as C.</li>
+  <li>
+    Make H pretty small. I won't look down on you if it's only 16
+    bits. Pick some initial H.
+  </li>
+  <li>
+    H is going to be the input key and the output block from C. That
+    means you'll need to pad it on the way in and drop bits on the
+    way out.
+  </li>
+</ol>
+<p>
+  Now write the function f(n) that will generate 2^n collisions in this
+  hash function.
+</p>
+<p>
+  Why does this matter? Well, one reason is that people have tried to
+  strengthen hash functions by cascading them together. Here's what I
+  mean:
+</p>
+<ol>
+  <li>Take hash functions f and g.</li>
+  <li>Build h such that h(x) = f(x) || g(x).</li>
+</ol>
+<p>
+  The idea is that if collisions in f cost 2^(b1/2) and collisions in g
+  cost 2^(b2/2), collisions in h should come to the princely sum of
+  2^((b1+b2)/2).
+</p>
+<p>
+  But now we know that's not true!
+</p>
+<p>
+  Here's the idea:
+</p>
+<ol>
+  <li>Pick the "cheaper" hash function. Suppose it's f.</li>
+  <li>Generate 2^(b2/2) colliding messages in f.</li>
+  <li>There's a good chance your message pool has a collision in g.</li>
+  <li>Find it.</li>
+</ol>
+<p>
+  And if it doesn't, keep generating cheap collisions until you find it.
+</p>
+<p>
+  Prove this out by building a more expensive (but not <i>too</i> expensive)
+  hash function to pair with the one you just used. Find a pair of
+  messages that collide under both functions. Measure the total number
+  of calls to the collision function.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

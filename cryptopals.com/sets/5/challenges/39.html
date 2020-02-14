@@ -1,0 +1,123 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 39 Set 5 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../5.html'>Set 5</a>
+            </li>
+            <li class='active'>
+              <a href='39.html'>Challenge 39</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Implement RSA</h3>
+          <p>
+  There are two annoying things about implementing RSA. Both of them
+  involve key generation; the actual encryption/decryption in RSA is
+  trivial.
+</p>
+<p>
+  First, you need to generate random primes. You can't just agree on a
+  prime ahead of time, like you do in DH. You can write this algorithm
+  yourself, but I just cheat and use OpenSSL's BN library to do the
+  work.
+</p>
+<p>
+  The second is that you need an "invmod" operation (the multiplicative
+  inverse), which is not an operation that is wired into your
+  language. The algorithm is just a couple lines, but I always lose an
+  hour getting it to work.
+</p>
+<p>
+  I recommend you not bother with primegen, but do take the time to get
+  your own EGCD and invmod algorithm working.
+</p>
+<p>
+  Now:
+</p>
+<ul>
+  <li>
+    Generate 2 random primes. We'll use small numbers to start, so you
+    can just pick them out of a prime table. Call them "p" and "q".
+  </li>
+  <li>
+    Let n be p * q. Your RSA math is modulo n.
+  </li>
+  <li>
+    Let et be (p-1)*(q-1) (the "totient"). You need this value only for
+    keygen.
+  </li>
+  <li>
+    Let e be 3.
+  </li>
+  <li>
+    Compute d = invmod(e, et). invmod(17, 3120) is 2753.
+  </li>
+  <li>
+    Your public key is [e, n]. Your private key is [d, n].
+  </li>
+  <li>
+    To encrypt: c = m**e%n. To decrypt: m = c**d%n
+  </li>
+  <li>
+    Test this out with a number, like "42".
+  </li>
+  <li>
+    Repeat with bignum primes (keep e=3).
+  </li>
+</ul>
+<p>
+  Finally, to encrypt a string, do something cheesy, like convert the
+  string to hex and put "0x" on the front of it to turn it into a
+  number. The math cares not how stupidly you feed it strings.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

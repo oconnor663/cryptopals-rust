@@ -1,0 +1,165 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 47 Set 6 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../6.html'>Set 6</a>
+            </li>
+            <li class='active'>
+              <a href='47.html'>Challenge 47</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Bleichenbacher's PKCS 1.5 Padding Oracle (Simple Case)</h3>
+          <div class='panel panel-danger'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Degree of difficulty: moderate</h3>
+  </div>
+  <div class='panel-body'>
+    These next two challenges are the hardest in the entire set.
+  </div>
+</div>
+<p>
+  Let us Google this for you:
+  <a href='http://lmgtfy.com/?q=%22Chosen+ciphertext+attacks+against+protocols+based+on+the+RSA+encryption+standard%22'>
+    "Chosen ciphertext attacks against protocols based on the RSA encryption standard"
+  </a>
+</p>
+<p>
+  This is Bleichenbacher from CRYPTO '98; I get a bunch of .ps versions
+  on the first search page.
+</p>
+<p>
+  Read the paper. It describes a padding oracle attack on
+  PKCS#1v1.5. The attack is similar in spirit to the CBC padding oracle
+  you built earlier; it's an "adaptive chosen ciphertext attack", which
+  means you start with a valid ciphertext and repeatedly corrupt it,
+  bouncing the adulterated ciphertexts off the target to learn things
+  about the original.
+</p>
+<p>
+  This is a common flaw even in modern cryptosystems that use RSA.
+</p>
+<p>
+  It's also the most fun you can have building a crypto attack. It
+  involves 9th grade math, but also has you implementing an algorithm
+  that is complex on par with finding a minimum cost spanning tree.
+</p>
+<p>
+  The setup:
+</p>
+<ul>
+  <li>
+    Build an oracle function, just like you did in the last exercise, but
+    have it check for plaintext[0] == 0 and plaintext[1] == 2.
+  </li>
+  <li>
+    Generate a 256 bit keypair (that is, p and q will each be 128 bit
+    primes), [n, e, d].
+  </li>
+  <li>Plug d and n into your oracle function.</li>
+  <li>
+    PKCS1.5-pad a short message, like "kick it, CC", and call it
+    "m". Encrypt to to get "c".
+  </li>
+  <li>
+    Decrypt "c" using your padding oracle.
+  </li>
+</ul>
+<p>
+  For this challenge, we've used an untenably small RSA modulus (you
+  could factor this keypair instantly). That's because this exercise
+  targets a specific step in the Bleichenbacher paper --- Step 2c, which
+  implements a fast, nearly O(log n) search for the plaintext.
+</p>
+<p>
+  Things you want to keep in mind as you read the paper:
+</p>
+<ul>
+  <li>RSA ciphertexts are just numbers.</li>
+  <li>
+    RSA is "homomorphic" with respect to multiplication, which means you
+    can multiply c * RSA(2) to get a c' that will decrypt to plaintext
+    * 2. This is mindbending but easy to see if you play with it in
+    code --- try multiplying ciphertexts with the RSA encryptions of
+    numbers so you know you grok it.
+  </li>
+  <li>
+    What you need to grok for this challenge is that Bleichenbacher uses
+    multiplication on ciphertexts the way the CBC oracle uses
+    XORs of random blocks.
+  </li>
+  <li>
+    A PKCS#1v1.5 conformant plaintext, one that starts with 00:02, must be
+    a number between 02:00:00...00 and 02:FF:FF..FF --- in other
+    words, 2B and 3B-1, where B is the bit size of the modulus
+    minus the first 16 bits. When you see 2B and 3B, that's the
+    idea the paper is playing with.
+  </li>
+</ul>
+<p>
+  To decrypt "c", you'll need Step 2a from the paper (the search for the
+  first "s" that, when encrypted and multiplied with the ciphertext,
+  produces a conformant plaintext), Step 2c, the fast O(log n) search,
+  and Step 3.
+</p>
+<p>
+  Your Step 3 code is probably not going to need to handle multiple
+  ranges.
+</p>
+<p>
+  We recommend you just use the raw math from paper (check, check,
+  double check your translation to code) and not spend too much time
+  trying to grok how the math works.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

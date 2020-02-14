@@ -1,0 +1,117 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 16 Set 2 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../2.html'>Set 2</a>
+            </li>
+            <li class='active'>
+              <a href='16.html'>Challenge 16</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>CBC bitflipping attacks</h3>
+          <p>
+  Generate a random AES key.
+</p>
+<p>
+  Combine your padding code and CBC code to write two functions.
+</p>
+<p>
+  The first function should take an arbitrary input string, prepend the
+  string:
+</p>
+<pre>"comment1=cooking%20MCs;userdata="</pre>
+<p>.. and append the string:</p>
+<pre>";comment2=%20like%20a%20pound%20of%20bacon"</pre>
+<p>The function should quote out the ";" and "=" characters.</p>
+<p>
+  The function should then pad out the input to the 16-byte AES block
+  length and encrypt it under the random AES key.
+</p>
+<p>
+  The second function should decrypt the string and look for the
+  characters ";admin=true;" (or, equivalently, decrypt, split the string
+  on ";", convert each resulting string into 2-tuples, and look for the
+  "admin" tuple).
+</p>
+<p>Return true or false based on whether the string exists.</p>
+<p>
+  If you've written the first function properly, it should <i>not</i> be
+  possible to provide user input to it that will generate the string the
+  second function is looking for. We'll have to break the crypto to do that.
+</p>
+<p>
+  Instead, modify the ciphertext (without knowledge of the AES key) to
+  accomplish this.
+</p>
+<p>
+  You're relying on the fact that in CBC mode, a 1-bit error in a
+  ciphertext block:
+</p>
+<ul>
+  <li>Completely scrambles the block the error occurs in</li>
+  <li>Produces the identical 1-bit error(/edit) in the next ciphertext block.</li>
+</ul>
+<div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Stop and think for a second.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      Before you implement this attack, answer this question: why does CBC
+      mode have this property?
+    </p>
+  </div>
+</div>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

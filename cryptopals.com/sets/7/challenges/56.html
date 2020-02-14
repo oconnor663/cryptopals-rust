@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 56 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='56.html'>Challenge 56</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>RC4 Single-Byte Biases</h3>
+          <p>
+  RC4 is popular stream cipher notable for its usage in protocols like
+  TLS, WPA, RDP, &c.
+</p>
+<p>
+  It's also susceptible to significant single-byte biases, especially
+  early in the keystream. What does this mean?
+</p>
+<p>
+  Simply: for a given position in the keystream, certain bytes are more
+  (or less) likely to pop up than others. Given enough encryptions of a
+  given plaintext, an attacker can use these biases to recover the
+  entire plaintext.
+</p>
+<p>
+  Now, search online for
+  <a href='http://lmgtfy.com/?q=On+the+Security+of+RC4+in+TLS+and+WPA'>
+    "On the Security of RC4 in TLS and WPA".
+  </a>
+  This
+  site is your one-stop shop for RC4 information.
+</p>
+<p>
+  Click through to "RC4 biases" on the right.
+</p>
+<p>
+  These are graphs of each single-byte bias (one per page). Notice in
+  particular the monster spikes on z16, z32, z48, etc. (Note: these are
+  one-indexed, so z16 = keystream[15].)
+</p>
+<p>
+  How useful are these biases?
+</p>
+<p>
+  Click through to the research paper and scroll down to the simulation
+  results. (Incidentally, the whole paper is a good read if you have
+  some spare time.) We start out with clear spikes at 2^26 iterations,
+  but our chances for recovering each of the first 256 bytes approaches
+  1 as we get up towards 2^32.
+</p>
+<p>
+  There are two ways to take advantage of these biases. The first method
+  is really simple:
+</p>
+<ol>
+  <li>Gain exhaustive knowledge of the keystream biases.</li>
+  <li>Encrypt the unknown plaintext 2^30+ times under different keys.</li>
+  <li>Compare the ciphertext biases against the keystream biases.</li>
+</ol>
+<p>
+  Doing this requires deep knowledge of the biases for each byte of the
+  keystream. But it turns out we can do pretty well with just a few
+  useful biases - if we have some control over the plaintext.
+</p>
+<p>
+  How? By using knowledge of a single bias as a peephole into the
+  plaintext.
+</p>
+<p>
+  Decode this secret:
+</p>
+<pre>QkUgU1VSRSBUTyBEUklOSyBZT1VSIE9WQUxUSU5F</pre>
+<p>
+  And call it a cookie. No peeking!
+</p>
+<p>
+  Now use it to build this encryption oracle:
+</p>
+<pre>RC4(your-request || cookie, random-key)</pre>
+<p>
+  Use a fresh 128-bit key on every invocation.
+</p>
+<p>
+  Picture this scenario: you want to steal a user's secure cookie. You
+  can spawn arbitrary requests (from a malicious plugin or somesuch) and
+  monitor network traffic. (Ok, this is unrealistic - the cookie
+  wouldn't be right at the beginning of the request like that - this is
+  just an example!)
+</p>
+<p>
+  You can control the position of the cookie by requesting "/", "/A",
+  "/AA", and so on.
+</p>
+<p>
+  Build bias maps for a couple chosen indices (z16 and z32 are good) and
+  decrypt the cookie.
+</p>
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

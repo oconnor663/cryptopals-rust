@@ -1,0 +1,94 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 11 Set 2 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../2.html'>Set 2</a>
+            </li>
+            <li class='active'>
+              <a href='11.html'>Challenge 11</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>An ECB/CBC detection oracle</h3>
+          <p>
+  Now that you have ECB and CBC working:
+</p>
+<p>
+  Write a function to generate a random AES key; that's just 16 random
+  bytes.
+</p>
+<p>
+  Write a function that encrypts data under an unknown key --- that is,
+  a function that generates a random key and encrypts under it.
+</p>
+<p>
+  The function should look like:
+</p>
+<pre>encryption_oracle(your-input)
+=> [MEANINGLESS JIBBER JABBER]</pre>
+<p>
+  Under the hood, have the function <i>append</i> 5-10 bytes (count chosen
+  randomly) <i>before</i> the plaintext and 5-10 bytes <i>after</i> the plaintext.
+</p>
+<p>
+  Now, have the function choose to encrypt under ECB 1/2 the time, and
+  under CBC the other half (just use random IVs each time for CBC). Use
+  rand(2) to decide which to use.
+</p>
+<p>
+  Detect the block cipher mode the function is using each time. You should end
+  up with a piece of code that, pointed at a block box that might be encrypting
+  ECB or CBC, tells you which one is happening.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

@@ -1,0 +1,127 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 36 Set 5 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../5.html'>Set 5</a>
+            </li>
+            <li class='active'>
+              <a href='36.html'>Challenge 36</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Implement Secure Remote Password (SRP)</h3>
+          <p>
+  To understand SRP, look at how you generate an AES key from DH; now,
+  just observe you can do the "opposite" operation an generate a numeric
+  parameter from a hash. Then:
+</p>
+<p>
+  Replace A and B with C and S (client & server)
+</p>
+<dt>C & S</dt>
+<dd>Agree on N=[NIST Prime], g=2, k=3, I (email), P (password)</dd>
+<dt>S</dt>
+<dd>
+  <ol>
+    <li>Generate salt as random integer</li>
+    <li>Generate string xH=SHA256(salt|password)</li>
+    <li>Convert xH to integer x somehow (put 0x on hexdigest)</li>
+    <li>Generate v=g**x % N</li>
+    <li>Save everything but x, xH</li>
+  </ol>
+</dd>
+<dt>C->S</dt>
+<dd>Send I, A=g**a % N (a la Diffie Hellman)</dd>
+<dt>S->C</dt>
+<dd>Send salt, B=kv + g**b % N</dd>
+<dt>S, C</dt>
+<dd>Compute string uH = SHA256(A|B), u = integer of uH</dd>
+<dt>C</dt>
+<dd>
+  <ol>
+    <li>Generate string xH=SHA256(salt|password)</li>
+    <li>Convert xH to integer x somehow (put 0x on hexdigest)</li>
+    <li>Generate S = (B - k * g**x)**(a + u * x) % N</li>
+    <li>Generate K = SHA256(S)</li>
+  </ol>
+</dd>
+<dt>S</dt>
+<dd>
+  <ol>
+    <li>Generate S = (A * v**u) ** b % N</li>
+    <li>Generate K = SHA256(S)</li>
+  </ol>
+</dd>
+<dt>C->S</dt>
+<dd>Send HMAC-SHA256(K, salt)</dd>
+<dt>S->C</dt>
+<dd>Send "OK" if HMAC-SHA256(K, salt) validates</dd>
+<p></p>
+<p>
+  You're going to want to do this at a REPL of some sort; it may take a
+  couple tries.
+</p>
+<p>
+  It doesn't matter how you go from integer to string or string to
+  integer (where things are going in or out of SHA256) as long as you do
+  it consistently. I tested by using the ASCII decimal representation of
+  integers as input to SHA256, and by converting the hexdigest to an
+  integer when processing its output.
+</p>
+<p>
+  This is basically Diffie Hellman with a tweak of mixing the password
+  into the public keys. The server also takes an extra step to avoid storing
+  an easily crackable password-equivalent.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

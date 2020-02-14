@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 50 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='50.html'>Challenge 50</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Hashing with CBC-MAC</h3>
+          <p>
+  Sometimes people try to use CBC-MAC as a hash function.
+</p>
+<p>
+  This is a bad idea. Matt Green explains:
+</p>
+<blockquote>
+  To make a long story short: cryptographic hash functions are public
+  functions (i.e., no secret key) that have the property of
+  collision-resistance (it's hard to find two messages with the same
+  hash). MACs are keyed functions that (typically) provide message
+  unforgeability -- a very different property. Moreover, they
+  guarantee this only when the key is secret.
+</blockquote>
+<p>
+  Let's try a simple exercise.
+</p>
+<p>
+  Hash functions are often used for code verification. This snippet of
+  JavaScript (with newline):
+</p>
+<pre>alert('MZA who was that?');</pre>
+<p>
+  Hashes to
+  <i>296b8d7cb78a243dda4d0a61d33bbdd1</i>
+  under CBC-MAC with a key of
+  <i>"YELLOW SUBMARINE"</i>
+  and a 0 IV.
+</p>
+<p>
+  Forge a valid snippet of JavaScript that alerts "Ayo, the Wu is back!"
+  and hashes to the same value. Ensure that it runs in a browser.
+</p>
+<div class='panel panel-info'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Extra Credit</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      Write JavaScript code that downloads your file, checks its CBC-MAC,
+      and inserts it into the DOM iff it matches the expected hash.
+    </p>
+  </div>
+</div>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

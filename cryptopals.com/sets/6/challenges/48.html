@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 48 Set 6 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../6.html'>Set 6</a>
+            </li>
+            <li class='active'>
+              <a href='48.html'>Challenge 48</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Bleichenbacher's PKCS 1.5 Padding Oracle (Complete Case)</h3>
+          <div class='panel panel-info'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Cryptanalytic MVP award</h3>
+  </div>
+  <div class='panel-body'>
+    This is an extraordinarily useful attack. PKCS#1v15 padding, despite being
+    totally insecure, <i>is the default padding used by RSA implementations</i>.
+    The OAEP standard that replaces it is not widely implemented. This attack
+    routinely breaks SSL/TLS.
+  </div>
+</div>
+<p>
+  This is a continuation of challenge #47; it implements the complete
+  BB'98 attack.
+</p>
+<p>
+  Set yourself up the way you did in #47, but this time generate a 768
+  bit modulus.
+</p>
+<p>
+  To make the attack work with a realistic RSA keypair, you need to
+  reproduce step 2b from the paper, and your implementation of Step 3
+  needs to handle multiple ranges.
+</p>
+<p>
+  The full Bleichenbacher attack works basically like this:
+</p>
+<ul>
+  <li>
+    Starting from the smallest 's' that could possibly produce
+    a plaintext bigger than 2B, iteratively search for an 's' that
+    produces a conformant plaintext.
+  </li>
+  <li>
+    For our known 's1' and 'n', solve m1=m0s1-rn (again: just a
+    definition of modular multiplication) for 'r', the number of
+    times we've wrapped the modulus.
+  </li>
+  <li>
+    'm0' and 'm1' are unknowns, but we know both are conformant
+    PKCS#1v1.5 plaintexts, and so are between [2B,3B].
+  </li>
+  <li>
+    We substitute the known bounds for both, leaving only 'r'
+    free, and solve for a range of possible 'r'  values. This
+    range should be small!
+  </li>
+  <li>
+    Solve m1=m0s1-rn again but this time for 'm0', plugging in
+    each value of 'r' we generated in the last step. This gives
+    us new intervals to work with. Rule out any interval that
+    is outside 2B,3B.
+  </li>
+  <li>
+    Repeat the process for successively higher values of 's'.
+    Eventually, this process will get us down to just one
+    interval, whereupon we're back to exercise #47.
+  </li>
+</ul>
+<p>
+  What happens when we get down to one interval is, we stop blindly
+  incrementing 's'; instead, we start rapidly growing 'r' and backing it
+  out to 's' values by solving m1=m0s1-rn for 's' instead of 'r' or
+  'm0'. So much algebra! Make your teenage son do it for you! *Note:
+  does not work well in practice*
+</p>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/SBCw4_XgouA" frameborder="0" allowfullscreen></iframe>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

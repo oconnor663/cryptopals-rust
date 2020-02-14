@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 17 Set 3 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../3.html'>Set 3</a>
+            </li>
+            <li class='active'>
+              <a href='17.html'>Challenge 17</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>The CBC padding oracle</h3>
+          <p>
+  This is the best-known attack on modern block-cipher cryptography.
+</p>
+<p>
+  Combine your padding code and your CBC code to write two functions.
+</p>
+<p>
+  The first function should select at random one of the following 10
+  strings:
+</p>
+<pre>MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=
+MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=
+MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==
+MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==
+MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl
+MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==
+MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==
+MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=
+MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=
+MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93</pre>
+<p>
+  ... generate a random AES key (which it should save for all future
+  encryptions), pad the string out to the 16-byte AES block size and
+  CBC-encrypt it under that key, providing the caller the ciphertext and
+  IV.
+</p>
+<p>
+  The second function should consume the ciphertext produced by the
+  first function, decrypt it, check its padding, and return true or
+  false depending on whether the padding is valid.
+</p>
+<div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>What you're doing here.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      This pair of functions approximates AES-CBC encryption as its deployed
+      serverside in web applications; the second function models the
+      server's consumption of an encrypted session token, as if it was a
+      cookie.
+    </p>
+  </div>
+</div>
+<p>
+  It turns out that it's possible to decrypt the ciphertexts provided by
+  the first function.
+</p>
+<p>
+  The decryption here depends on a side-channel leak by the decryption
+  function. The leak is the error message that the padding is valid or not.
+</p>
+<p>
+  You can find 100 web pages on how this attack works, so I won't
+  re-explain it. What I'll say is this:
+</p>
+<p>
+  The fundamental insight behind this attack is that the byte 01h is
+  valid padding, and occur in 1/256 trials of "randomized" plaintexts
+  produced by decrypting a tampered ciphertext.
+</p>
+<p>02h in isolation is <i>not</i> valid padding.</p>
+<p>
+  02h 02h <i>is</i> valid padding, but is much less likely to occur randomly
+  than 01h.
+</p>
+<p>03h 03h 03h is even less likely.</p>
+<p>
+  So you can assume that if you corrupt a decryption AND it had valid
+  padding, you know what that padding byte is.
+</p>
+<p>
+  It is easy to get tripped up on the fact that CBC plaintexts are
+  "padded". <i>Padding oracles have nothing to do with the actual padding
+  on a CBC plaintext.</i> It's an attack that targets a specific bit of code
+  that handles decryption. You can mount a padding oracle on <i>any CBC
+  block</i>, whether it's padded or not.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

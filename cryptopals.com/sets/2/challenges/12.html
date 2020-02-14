@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 12 Set 2 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../2.html'>Set 2</a>
+            </li>
+            <li class='active'>
+              <a href='12.html'>Challenge 12</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Byte-at-a-time ECB decryption (Simple)</h3>
+          <p>
+  Copy your oracle function to a new function that encrypts buffers
+  under ECB mode using a <i>consistent</i> but <i>unknown</i> key (for instance,
+  assign a single random key, once, to a global variable).
+</p>
+<p>
+  Now take that same function and have it append to the plaintext,
+  BEFORE ENCRYPTING, the following string:
+</p>
+<pre>Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+YnkK</pre>
+<div class='panel panel-danger'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Spoiler alert.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      Do not decode this string now. Don't do it.
+    </p>
+  </div>
+</div>
+<p>
+  Base64 decode the string before appending it. <i>Do not base64 decode the
+  string by hand; make your code do it</i>. The point is that you don't know
+  its contents.
+</p>
+<p>
+  What you have now is a function that produces:
+</p>
+<pre>AES-128-ECB(your-string || unknown-string, random-key)</pre>
+<p>
+  It turns out: you can decrypt "unknown-string" with repeated calls to the oracle
+  function!
+</p>
+<p>
+  Here's roughly how:
+</p>
+<style>
+  li { padding-top: 1em; }
+</style>
+<ol>
+  <li>
+    Feed identical bytes of your-string to the function 1 at a time ---
+    start with 1 byte ("A"), then "AA", then "AAA" and so on. Discover the
+    block size of the cipher. You know it, but do this step anyway.
+  </li>
+  <li>
+    Detect that the function is using ECB. You already know, but do
+    this step anyways.
+  </li>
+  <li>
+    Knowing the block size, craft an input block that is exactly 1 byte
+    short (for instance, if the block size is 8 bytes, make
+    "AAAAAAA"). Think about what the oracle function is going to put in
+    that last byte position.
+  </li>
+  <li>
+    Make a dictionary of every possible last byte by feeding different
+    strings to the oracle; for instance, "AAAAAAAA", "AAAAAAAB",
+    "AAAAAAAC", remembering the first block of each invocation.
+  </li>
+  <li>
+    Match the output of the one-byte-short input to one of the entries
+    in your dictionary. You've now discovered the first byte of
+    unknown-string.
+  </li>
+  <li>
+    Repeat for the next byte.
+  </li>
+</ol>
+<div class='panel panel-info'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Congratulations.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      This is the first challenge we've given you whose solution will break real crypto.
+      Lots of people know that when you encrypt something in ECB mode, you can see penguins
+      through it. Not so many of them can <i>decrypt the contents of those ciphertexts</i>,
+      and now you can. If our experience is any guideline, this attack will get you code
+      execution in security tests about once a year.
+    </p>
+  </div>
+</div>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

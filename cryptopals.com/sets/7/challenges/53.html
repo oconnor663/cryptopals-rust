@@ -1,0 +1,149 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 53 Set 7 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../7.html'>Set 7</a>
+            </li>
+            <li class='active'>
+              <a href='53.html'>Challenge 53</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>Kelsey and Schneier's Expandable Messages</h3>
+          <p>
+  One of the basic yardsticks we use to judge a cryptographic hash
+  function is its resistance to second preimage attacks. That means that
+  if I give you x and y such that H(x) = y, you should have a tough time
+  finding x' such that H(x') = H(x) = y.
+</p>
+<p>
+  How tough? Brute-force tough. For a 2^b hash function, we want second
+  preimage attacks to cost 2^b operations.
+</p>
+<p>
+  This turns out not to be the case for very long messages.
+</p>
+<p>
+  Consider the problem we're trying to solve: we want to find a message
+  that will collide with H(x) in the very last block. But there are a
+  ton of intermediate blocks, each with its own intermediate hash
+  state.
+</p>
+<p>
+  What if we could collide into one of those? We could then append all
+  the following blocks from the original message to produce the original
+  H(x). Almost.
+</p>
+<p>
+  We can't do this exactly because the padding will mess things up.
+</p>
+<p>
+  What we need are <i>expandable messages.</i>
+</p>
+<p>
+  In the last problem we used multicollisions to produce 2^n colliding
+  messages for n*2^(b/2) effort. We can use the same principles to
+  produce a set of messages of length (k, k + 2^k - 1) for a given k.
+</p>
+<p>
+  Here's how:
+</p>
+<ul>
+  <li>
+    Starting from the hash function's initial state, find a collision
+    between a single-block message and a message of 2^(k-1)+1 blocks. DO
+    NOT hash the entire long message each time. Choose 2^(k-1) dummy
+    blocks, hash those, then focus on the last block.
+  </li>
+  <li>
+    Take the output state from the first step. Use this as your new
+    initial state and find another collision between a single-block
+    message and a message of 2^(k-2)+1 blocks.
+  </li>
+  <li>
+    Repeat this process k total times. Your last collision should be
+    between a single-block message and a message of 2^0+1 = 2 blocks.
+  </li>
+</ul>
+<p>
+  Now you can make a message of any length in (k, k + 2^k - 1) blocks by
+  choosing the appropriate message (short or long) from each pair.
+</p>
+<p>
+  Now we're ready to attack a long message M of 2^k blocks.
+</p>
+<ol>
+  <li>
+    Generate an expandable message of length (k, k + 2^k - 1) using
+    the strategy outlined above.
+  </li>
+  <li>
+    Hash M and generate a map of intermediate hash states to the
+    block indices that they correspond to.
+  </li>
+  <li>
+    From your expandable message's final state, find a single-block
+    "bridge" to intermediate state in your map. Note the index i it
+    maps to.
+  </li>
+  <li>
+    Use your expandable message to generate a prefix of the right
+    length such that <i>len(prefix || bridge || M[i..])</i> = <i>len(M)</i>.
+  </li>
+</ol>
+<p>
+  The padding in the final block should now be correct, and your forgery
+  should hash to the same value as M.
+</p>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

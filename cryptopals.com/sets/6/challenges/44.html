@@ -1,0 +1,123 @@
+<html>
+  <head>
+    <meta content='text/html; charset=utf-8' http-equiv='content-type'>
+    <meta content='Thomas Ptacek, Sean Devlin, and Alex Balducci' name='author'>
+    <title>Challenge 44 Set 6 - The Cryptopals Crypto Challenges</title>
+    <link href='../../../static/bootstrap.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='../../../static/app.css' media='all' rel='stylesheet' type='text/css'>
+    <link href='https://cloud.typography.com/6817512/661724/css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.css' rel='stylesheet' type='text/css'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.min.js'></script>
+    <style>
+      body { 
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h3>
+            <a href='../../../index.html'>the cryptopals crypto challenges</a>
+          </h3>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-md-12'>
+          <ul class='breadcrumb'>
+            <li>
+              <a href='../../../index.html'>Challenges</a>
+            </li>
+            <li>
+              <a href='../../6.html'>Set 6</a>
+            </li>
+            <li class='active'>
+              <a href='44.html'>Challenge 44</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class='row'>
+        
+        <div class='col-md-2'></div>
+        <div class='col-md-10'>
+          <h3>DSA nonce recovery from repeated nonce</h3>
+          <div class='panel panel-info'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Cryptanalytic MVP award.</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      This attack (in an elliptic curve group) broke the PS3. It is a great, great attack.
+    </p>
+  </div>
+</div>
+<p>
+  <a href='../../../static/challenge-data/44.txt'>In this file find a collection of DSA-signed messages.</a>
+  (NB: each msg has a trailing space.)
+</p>
+<p>
+  These were signed under the following pubkey:
+</p>
+<pre>y = 2d026f4bf30195ede3a088da85e398ef869611d0f68f07
+    13d51c9c1a3a26c95105d915e2d8cdf26d056b86b8a7b8
+    5519b1c23cc3ecdc6062650462e3063bd179c2a6581519
+    f674a61f1d89a1fff27171ebc1b93d4dc57bceb7ae2430
+    f98a6a4d83d8279ee65d71c1203d2c96d65ebbf7cce9d3
+    2971c3de5084cce04a2e147821</pre>
+<p>
+  (using the same domain parameters as the previous exercise)
+</p>
+<p>
+  It should not be hard to find the messages for which we have
+  accidentally used a repeated "k". Given a pair of such messages, you
+  can discover the "k" we used with the following formula:
+</p>
+<pre>         (m1 - m2)
+     k = --------- mod q
+         (s1 - s2)</pre>
+<div class='panel panel-warning'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>9th Grade Math: Study It!</h3>
+  </div>
+  <div class='panel-body'>
+    <p>
+      If you want to demystify this, work out that equation from the original DSA equations.
+    </p>
+  </div>
+</div>
+<div class='panel panel-danger'>
+  <div class='panel-heading'>
+    <h3 class='panel-title'>Basic cyclic group math operations want to screw you</h3>
+  </div>
+  <div class='panel-body'>
+    Remember all this math is mod q; s2 may be larger than s1, for
+    instance, which isn't a problem if you're doing the subtraction mod
+    q. If you're like me, you'll definitely lose an hour to forgetting a
+    paren or a mod q. (And don't forget that modular inverse function!)
+  </div>
+</div>
+<p>
+  What's my private key? Its SHA-1 (from hex) is:
+</p>
+<pre>   ca8f6f7c66fa362d40760d135b763eb8527d3d52</pre>
+
+        </div>
+      </div>
+   </div>
+   <div style="text-align:center"><a href="https://cryptoservices.github.io/">Cryptography Services</a> | <a href="https://www.nccgroup.trust/us/">NCC Group</a></div>
+  </body>
+  <script>
+    /*var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-68682-6']);
+    _gaq.push(['_trackPageview']);
+    
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();*/
+  </script>
+</html>

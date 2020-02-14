@@ -1,3 +1,5 @@
+use arrayref::array_ref;
+use block_cipher_trait::BlockCipher;
 use std::str::from_utf8;
 
 fn xor(buf: &mut [u8], mask: &[u8]) {
@@ -72,6 +74,18 @@ fn hamming(input1: &[u8], input2: &[u8]) -> u64 {
         .zip(input2.iter().copied())
         .map(|(a, b)| hamming_byte(a, b))
         .sum()
+}
+
+const INPUT_7: &str = include_str!("../input/7.txt");
+
+fn aes128_ecb_decrypt(key: &[u8; 16], buf: &mut [u8]) {
+    assert_eq!(buf.len() % 16, 0);
+    let cipher = aes::Aes128::new(&((*key).into()));
+    for chunk in buf.chunks_exact_mut(16) {
+        let mut block = (*array_ref!(chunk, 0, 16)).into();
+        cipher.decrypt_block(&mut block);
+        chunk.copy_from_slice(&block);
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -151,13 +165,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // challenge 6
     assert_eq!(hamming(b"this is a test", b"wokka wokka!!!"), 37);
-    let bytes = base64::decode(&INPUT_6.replace("\n", ""))?;
+    let bytes_6 = base64::decode(&INPUT_6.replace("\n", ""))?;
     let mut best_keysize = 0;
     let mut lowest_distance = u64::max_value();
     for keysize in 2..=40 {
         let mut distance = 0;
         let mut last_chunk = &[][..];
-        for chunk in bytes.chunks(keysize) {
+        for chunk in bytes_6.chunks(keysize) {
             if !last_chunk.is_empty() {
                 distance += hamming(&last_chunk[..chunk.len()], chunk);
             }
@@ -170,7 +184,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let mut key = vec![0; best_keysize];
     for key_i in 0..key.len() {
-        let strided_bytes: Vec<u8> = bytes[key_i..].iter().copied().step_by(key.len()).collect();
+        let strided_bytes: Vec<u8> = bytes_6[key_i..]
+            .iter()
+            .copied()
+            .step_by(key.len())
+            .collect();
         let mut best_score = 0f32;
         let mut best_key_byte = 0;
         for candidate in 0..=255 {
@@ -186,7 +204,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         key[key_i] = best_key_byte;
     }
     println!("challenge 6 key: {:?}", from_utf8(&key)?);
-    let decrypted = repeating_key_xor(&key, &bytes);
+    let decrypted = repeating_key_xor(&key, &bytes_6);
+    println!("{}", from_utf8(&decrypted)?);
+
+    // Challenge 7
+    let bytes_7 = base64::decode(&INPUT_7.replace("\n", ""))?;
+    let mut decrypted = bytes_7.clone();
+    aes128_ecb_decrypt(b"YELLOW SUBMARINE", &mut decrypted);
+    println!("challenge 7");
     println!("{}", from_utf8(&decrypted)?);
 
     Ok(())

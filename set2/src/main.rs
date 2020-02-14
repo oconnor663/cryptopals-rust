@@ -14,14 +14,17 @@ fn pad(input: &[u8], block_len: usize) -> Vec<u8> {
     out
 }
 
-fn unpad(input: &[u8], block_len: usize) -> &[u8] {
+fn unpad(input: &[u8]) -> Result<Vec<u8>, ()> {
     let last = *input.last().unwrap();
-    assert!(last != 0);
-    assert!(last as usize <= block_len, "invalid padding byte {}", last);
-    for i in input.len() - last as usize..input.len() {
-        assert_eq!(input[i], last);
+    if last == 0 {
+        return Err(());
     }
-    &input[0..input.len() - last as usize]
+    for i in input.len() - last as usize..input.len() {
+        if input[i] != last {
+            return Err(());
+        }
+    }
+    Ok(input[0..input.len() - last as usize].to_vec())
 }
 
 fn aes128_encrypt_block(key: &[u8; 16], block: &mut [u8]) {
@@ -62,7 +65,7 @@ fn ecb_decrypt(key: &[u8; 16], ciphertext: &[u8]) -> Vec<u8> {
     for block in padded_plaintext.chunks_exact_mut(16) {
         aes128_decrypt_block(key, block);
     }
-    unpad(&padded_plaintext, 16).to_vec()
+    unpad(&padded_plaintext).unwrap()
 }
 
 fn cbc_encrypt(key: &[u8; 16], iv: &[u8], input: &[u8]) -> Vec<u8> {
@@ -87,7 +90,7 @@ fn cbc_decrypt(key: &[u8; 16], iv: &[u8], ciphertext: &[u8]) -> Vec<u8> {
         xor(block, &last);
         last = ciphertext_copy;
     }
-    unpad(&plaintext, 16).to_vec()
+    unpad(&plaintext).unwrap()
 }
 
 const INPUT_10: &str = include_str!("../input/10.txt");
@@ -339,6 +342,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     assert!(plaintext_14 == expected_answer_dont_look);
     println!("{}", from_utf8(&plaintext_14)?);
+
+    // Challenge 15
+    assert_eq!(
+        unpad(b"ICE ICE BABY\x04\x04\x04\x04").unwrap(),
+        b"ICE ICE BABY".to_vec()
+    );
+    assert!(unpad(b"ICE ICE BABY\x05\x05\x05\x05").is_err());
+    assert!(unpad(b"ICE ICE BABY\x01\x02\x03\x04").is_err());
 
     Ok(())
 }

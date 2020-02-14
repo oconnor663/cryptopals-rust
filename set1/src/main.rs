@@ -46,6 +46,16 @@ fn score(bytes: &[u8]) -> f32 {
     normalized_dot_product(&w, &f)
 }
 
+const INPUT_4: &str = include_str!("../input/4.txt");
+
+fn repeating_key_xor(key: &[u8], input: &[u8]) -> Vec<u8> {
+    let mut out = input.to_vec();
+    for i in 0..out.len() {
+        out[i] ^= key[i % key.len()];
+    }
+    out
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // challenge 1
     let hex_string = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -87,6 +97,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "challenge 3: score {} {:?}",
         max_score,
         std::str::from_utf8(best_buf)?
+    );
+
+    // challenge 4
+    let mut best_score = 0f32;
+    let mut best_buf = Vec::new();
+    let mut key = 0;
+    for line in INPUT_4.split_whitespace() {
+        let buf = hex::decode(line)?;
+        for b in 0..=255 {
+            let mut buf = buf.clone();
+            let mask = vec![b; buf.len()];
+            xor(&mut buf, &mask);
+            let score = score(&buf);
+            if score > best_score {
+                best_score = score;
+                best_buf = buf;
+                key = b;
+            }
+        }
+    }
+    println!(
+        "challenge 4: score {} key {} {:?}",
+        best_score,
+        key,
+        std::str::from_utf8(&best_buf)?
+    );
+
+    // challenge 5
+    let input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    assert_eq!(
+        hex::encode(&repeating_key_xor(b"ICE", input.as_bytes())),
+        "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
     );
 
     Ok(())

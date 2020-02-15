@@ -4,6 +4,7 @@ use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 use std::convert::TryInto;
 use std::fmt;
+use std::str::from_utf8;
 
 fn pad(input: &[u8], block_len: usize) -> Vec<u8> {
     let mut out = input.to_vec();
@@ -174,6 +175,19 @@ fn crack_block(block: &mut [u8; 16], prev_block: &[u8; 16], oracle: fn(&[u8], &[
     block.copy_from_slice(&known_bytes);
 }
 
+fn ctr_xor(key: &[u8; 16], mut buf: &mut [u8]) {
+    let mut counter = 0u64;
+    while !buf.is_empty() {
+        let mut block = [0; 16];
+        block[8..16].copy_from_slice(&counter.to_le_bytes());
+        aes128_encrypt_block(key, &mut block);
+        let take = std::cmp::min(buf.len(), 16);
+        xor(&mut buf[..take], &block[..take]);
+        buf = &mut buf[take..];
+        counter += 1;
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 17
     println!("============ challenge 17 =============");
@@ -188,5 +202,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let unpadded = unpad(&plaintext)?;
     println!("{:?}", String::from_utf8_lossy(&unpadded));
+
+    // Challenge 18
+    println!("============ challenge 18 =============");
+    let mut buf =
+        base64::decode("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==")?;
+    ctr_xor(b"YELLOW SUBMARINE", &mut buf);
+    println!("{}", from_utf8(&buf)?);
+
     Ok(())
 }

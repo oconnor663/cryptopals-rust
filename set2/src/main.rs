@@ -204,6 +204,26 @@ fn first_indentical_index(input: &[u8]) -> usize {
     first_identical
 }
 
+fn encrypt_userdata(data: &[u8]) -> Vec<u8> {
+    assert!(!data.contains(&(';' as u8)));
+    assert!(!data.contains(&('=' as u8)));
+    let mut content = b"comment1=cooking%20MCs;userdata=".to_vec();
+    content.extend_from_slice(data);
+    content.extend_from_slice(b";comment2=%20like%20a%20pound%20of%20bacon");
+    let key = b"secret key!!!!!!";
+    let iv = b"secret IV!!!!!!!";
+    cbc_encrypt(key, iv, &content)
+}
+
+fn user_is_admin(ciphertext: &[u8]) -> bool {
+    let key = b"secret key!!!!!!";
+    let iv = b"secret IV!!!!!!!";
+    let plaintext = cbc_decrypt(key, iv, ciphertext);
+    dbg!(String::from_utf8_lossy(&plaintext))
+        .find(";admin=true;")
+        .is_some()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 9
     assert_eq!(
@@ -350,6 +370,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     assert!(unpad(b"ICE ICE BABY\x05\x05\x05\x05").is_err());
     assert!(unpad(b"ICE ICE BABY\x01\x02\x03\x04").is_err());
+
+    // Challenge 16
+    // User data begins at byte 32, which is a block boundary. If we have two
+    // blocks of user data, we can scramble the first one to edit the
+    // decryption of the second one.
+    println!("============= challenge 16 =================");
+    let mut ciphertext = encrypt_userdata(&[0; 2 * 16]);
+    assert!(!user_is_admin(&ciphertext));
+    let mask = b";admin=true;";
+    xor(&mut ciphertext[32..][..mask.len()], mask);
+    assert!(user_is_admin(&ciphertext));
 
     Ok(())
 }

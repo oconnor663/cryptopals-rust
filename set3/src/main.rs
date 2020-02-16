@@ -306,6 +306,63 @@ impl MT {
     }
 }
 
+fn undo_right_shift_xor_mask(mut y: u32, shift: u32, mask: u32) -> u32 {
+    // One bit at a time.
+    for bit_index in 0..32 {
+        if bit_index + shift < 32 {
+            let bit_mask = 1 << (31 - bit_index);
+            y ^= ((y & bit_mask) >> shift) & mask;
+        }
+    }
+    y
+}
+
+#[test]
+fn test_undo_right_shift_xor() {
+    for shift in 1..32 {
+        dbg!(shift);
+        let y = 0x1fd72a03;
+        let shifted = y ^ (y >> shift);
+        assert_eq!(y, undo_right_shift_xor_mask(shifted, shift, !0));
+    }
+}
+
+fn undo_left_shift_xor_mask(mut y: u32, shift: u32, mask: u32) -> u32 {
+    // One bit at a time.
+    for bit_index in (0..32).rev() {
+        if bit_index >= shift {
+            let bit_mask = 1 << (31 - bit_index);
+            y ^= ((y & bit_mask) << shift) & mask;
+        }
+    }
+    y
+}
+
+#[test]
+fn test_undo_left_shift_xor() {
+    for shift in 1..32 {
+        dbg!(shift);
+        let y = 0x1fd72a03;
+        let shifted = y ^ (y << shift);
+        assert_eq!(y, undo_left_shift_xor_mask(shifted, shift, !0));
+    }
+}
+
+fn untemper(mut y: u32) -> u32 {
+    // Here's what we have to undo:
+    // let mut y = self.array[self.index];
+    // y ^= (y >> U) & D;
+    // y ^= (y << S) & B;
+    // y ^= (y << T) & C;
+    // y ^= y >> L;
+
+    y = undo_right_shift_xor_mask(y, L, !0);
+    y = undo_left_shift_xor_mask(y, T, C);
+    y = undo_left_shift_xor_mask(y, S, B);
+    y = undo_right_shift_xor_mask(y, U, D);
+    y
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 17
     println!("============ challenge 17 =============");
@@ -381,6 +438,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
     }
+
+    // Challenge 23
+    let mut rng = MT::seed(rand::random());
+    let mut untempered = [0; N];
+    for i in 0..N {
+        untempered[i] = untemper(rng.extract_number());
+    }
+    let mut rng_clone = MT {
+        array: untempered,
+        index: N,
+    };
+    assert_eq!(rng.extract_number(), rng_clone.extract_number());
+    assert_eq!(rng.extract_number(), rng_clone.extract_number());
+    assert_eq!(rng.extract_number(), rng_clone.extract_number());
+    assert_eq!(rng.extract_number(), rng_clone.extract_number());
+    assert_eq!(rng.extract_number(), rng_clone.extract_number());
 
     Ok(())
 }

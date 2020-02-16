@@ -371,5 +371,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(3071714933, rng.extract_number());
     assert_eq!(3626093760, rng.extract_number());
 
+    // Challenge 22
+    // Sorry I don't want to wait for this thing to sleep :)
+    println!("============ challenge 22 =============");
+    let output = MT::seed(dbg!(rand::thread_rng().gen_range(0, 1000))).extract_number();
+    for i in 0..1000 {
+        if MT::seed(i).extract_number() == output {
+            println!("the secret seed is {}", i);
+            break;
+        }
+    }
+
     Ok(())
 }

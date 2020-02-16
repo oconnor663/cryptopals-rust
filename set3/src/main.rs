@@ -1,7 +1,7 @@
 use arrayref::array_ref;
 use block_cipher_trait::BlockCipher;
 use once_cell::sync::Lazy;
-use rand::{thread_rng, Rng};
+use rand::{thread_rng, Rng, RngCore};
 use std::convert::TryInto;
 use std::fmt;
 use std::str::from_utf8;
@@ -363,6 +363,16 @@ fn untemper(mut y: u32) -> u32 {
     y
 }
 
+fn mt_stream(seed: u32, mut buf: &mut [u8]) {
+    let mut mt = MT::seed(seed);
+    while !buf.is_empty() {
+        let stream = mt.extract_number().to_le_bytes();
+        let take = std::cmp::min(buf.len(), stream.len());
+        xor(&mut buf[..take], &stream[..take]);
+        buf = &mut buf[take..];
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 17
     println!("============ challenge 17 =============");
@@ -454,6 +464,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(rng.extract_number(), rng_clone.extract_number());
     assert_eq!(rng.extract_number(), rng_clone.extract_number());
     assert_eq!(rng.extract_number(), rng_clone.extract_number());
+
+    // Challenge 24
+    println!("============ challenge 24 =============");
+    let mut msg = *b"this is a message with some stuff";
+    eprintln!("{:?}", String::from_utf8_lossy(&msg));
+    mt_stream(42, &mut msg);
+    eprintln!("{:?}", String::from_utf8_lossy(&msg));
+    mt_stream(42, &mut msg);
+    eprintln!("{:?}", String::from_utf8_lossy(&msg));
+    let mut rng = rand::thread_rng();
+    let random_bytes_len = rng.gen_range(0, 100);
+    let mut ciphertext = vec![0; random_bytes_len];
+    rng.fill_bytes(&mut ciphertext);
+    ciphertext.extend_from_slice(&['A' as u8; 14]);
+    let secret_key: u32 = rng.gen_range(0, 1 << 16);
+    dbg!(secret_key);
+    mt_stream(secret_key, &mut ciphertext);
+    // Crack the secret key.
+    assert_eq!(random_bytes_len, ciphertext.len() - 14, "we know this");
+    let four_byte_block_start = random_bytes_len + (4 - random_bytes_len % 4);
+    let block = &ciphertext[four_byte_block_start..][..4];
+    let block_num = four_byte_block_start / 4;
+    let block_mask = u32::from_le_bytes(*b"AAAA");
+    let block_val = u32::from_le_bytes(block.try_into().unwrap()) ^ block_mask;
+    for seed in 0..(1 << 16) {
+        let mut mt = MT::seed(seed);
+        let mut output = 0;
+        for _ in 0..block_num + 1 {
+            output = mt.extract_number();
+        }
+        if output == block_val {
+            eprintln!("discovered secret key: {}", seed);
+            break;
+        }
+    }
 
     Ok(())
 }

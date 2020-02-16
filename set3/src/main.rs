@@ -97,7 +97,7 @@ fn random_key() -> [u8; 16] {
     buf
 }
 
-static SECRET_KEY_17: Lazy<[u8; 16]> = Lazy::new(random_key);
+static SECRET_KEY_DONT_LOOK: Lazy<[u8; 16]> = Lazy::new(random_key);
 
 fn encrypt_some_string() -> ([u8; 16], Vec<u8>) {
     let texts = [
@@ -115,11 +115,11 @@ fn encrypt_some_string() -> ([u8; 16], Vec<u8>) {
     let iv = random_key();
     let text_index = rand::thread_rng().gen_range(0, texts.len());
     let text = base64::decode(&texts[text_index]).unwrap();
-    (iv, cbc_encrypt(&SECRET_KEY_17, &iv, &text))
+    (iv, cbc_encrypt(&SECRET_KEY_DONT_LOOK, &iv, &text))
 }
 
 fn has_valid_padding(ciphertext: &[u8], iv: &[u8; 16]) -> bool {
-    cbc_decrypt(&SECRET_KEY_17, iv, ciphertext).is_ok()
+    cbc_decrypt(&SECRET_KEY_DONT_LOOK, iv, ciphertext).is_ok()
 }
 
 fn crack_block(block: &mut [u8; 16], prev_block: &[u8; 16], oracle: fn(&[u8], &[u8; 16]) -> bool) {
@@ -188,6 +188,59 @@ fn ctr_xor(key: &[u8; 16], mut buf: &mut [u8]) {
     }
 }
 
+const CHALLENGE_19_INPUTS: &str = include_str!("../input/19.txt");
+
+fn ciphertexts_19() -> Vec<Vec<u8>> {
+    let mut ciphertexts = Vec::new();
+    for b64_text in CHALLENGE_19_INPUTS.split_whitespace() {
+        let mut buf = base64::decode(b64_text).unwrap();
+        ctr_xor(&SECRET_KEY_DONT_LOOK, &mut buf);
+        ciphertexts.push(buf);
+    }
+    ciphertexts
+}
+
+fn byte_frequencies(bytes: &[u8]) -> [f32; 256] {
+    let mut counts = [0usize; 256];
+    for &b in bytes {
+        counts[b as usize] += 1;
+    }
+    let mut frequencies = [0f32; 256];
+    for i in 0..frequencies.len() {
+        frequencies[i] = counts[i] as f32 / bytes.len() as f32;
+    }
+    frequencies
+}
+
+const RUST_WIKIPEDIA: &str = include_str!("../../set1/input/rust_wikipedia.txt");
+
+fn wikipedia_frequencies() -> [f32; 256] {
+    byte_frequencies(RUST_WIKIPEDIA.as_bytes())
+}
+
+fn magnitude(v: &[f32]) -> f32 {
+    let mut m = 0f32;
+    for &x in v {
+        m += x * x;
+    }
+    m.sqrt()
+}
+
+fn normalized_dot_product(a: &[f32], b: &[f32]) -> f32 {
+    assert_eq!(a.len(), b.len());
+    let mut sum = 0f32;
+    for i in 0..a.len() {
+        sum += a[i] * b[i];
+    }
+    sum / magnitude(a) / magnitude(b)
+}
+
+fn score(bytes: &[u8]) -> f32 {
+    let w = wikipedia_frequencies();
+    let f = byte_frequencies(bytes);
+    normalized_dot_product(&w, &f)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 17
     println!("============ challenge 17 =============");
@@ -209,6 +262,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         base64::decode("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==")?;
     ctr_xor(b"YELLOW SUBMARINE", &mut buf);
     println!("{}", from_utf8(&buf)?);
+
+    // Challenge 19
+    println!("============ challenge 19 =============");
+    let ciphertexts = ciphertexts_19();
+    let max_len = ciphertexts.iter().map(Vec::len).max().unwrap();
+    let mut mask = Vec::new();
+    for index in 0..max_len {
+        let mut bytes = Vec::new();
+        for c in &ciphertexts {
+            if c.len() > index {
+                bytes.push(c[index]);
+            }
+        }
+        let mut best_score = 0f32;
+        let mut best_byte = 0;
+        for mask_byte in 0..=255 {
+            let mut buf = bytes.clone();
+            for b in &mut buf {
+                *b ^= mask_byte;
+            }
+            let score = score(&buf);
+            if score > best_score {
+                best_score = score;
+                best_byte = mask_byte;
+            }
+        }
+        mask.push(best_byte);
+    }
+    for text in &ciphertexts {
+        let mut buf = text.clone();
+        let mask = &mask[..text.len()];
+        xor(&mut buf, mask);
+        println!("{:?}", String::from_utf8_lossy(&buf));
+    }
 
     Ok(())
 }

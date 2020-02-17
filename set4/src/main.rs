@@ -198,10 +198,10 @@ fn sha1_mac_verify(key: &[u8; 16], message: &[u8], mac: &[u8; 20]) -> bool {
 //   rather than uneven bit lengths.)
 // - The 8-byte big-endian *bit* length of the message, at the end of the
 //   padding.
-fn sha1_pad(message: &[u8]) -> Vec<u8> {
+fn sha1_pad(message: &[u8], total_len: u64) -> Vec<u8> {
     let mut padded = message.to_vec();
     padded.push(0x80);
-    let last_block_len = padded.len() % 64;
+    let last_block_len = (total_len + 1) % 64;
     if 64 - last_block_len >= 8 {
         for _ in 0..64 - last_block_len - 8 {
             padded.push(0);
@@ -211,8 +211,7 @@ fn sha1_pad(message: &[u8]) -> Vec<u8> {
             padded.push(0);
         }
     }
-    padded.extend_from_slice(&(message.len() * 8).to_be_bytes());
-    assert_eq!(padded.len() % 64, 0);
+    padded.extend_from_slice(&(total_len * 8).to_be_bytes());
     padded
 }
 
@@ -271,6 +270,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mac = sha1_mac(&key, b"hello world");
     assert!(!sha1_mac_verify(&random_key(), b"hello world", &mac));
     assert!(!sha1_mac_verify(&key, b"WRONG MESSAGE", &mac));
+
+    // Challenge 29
     // Test length extension.
     let mut foo_hasher = sha1::Sha1::new();
     foo_hasher.update(b"foo");
@@ -278,12 +279,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut foo_extender = sha1::Sha1::from_state_bytes(&foo_hash, 3);
     foo_extender.update(b"bar");
     let extended_hash = foo_extender.digest().bytes();
-    let mut total_message = sha1_pad(b"foo");
+    let mut total_message = sha1_pad(b"foo", 3);
     total_message.extend_from_slice(b"bar");
     let mut total_hasher = sha1::Sha1::new();
     total_hasher.update(&total_message);
     let total_hash = total_hasher.digest().bytes();
     assert_eq!(extended_hash, total_hash);
+    // Attack the MAC function.
+    let plaintext =
+        b"comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon";
+    let mac = sha1_mac(&SECRET_KEY_DONT_LOOK, plaintext);
+    let mac_input_len = (plaintext.len() + 16) as u64;
+    let mut extender = sha1::Sha1::from_state_bytes(&mac, mac_input_len);
+    let suffix = b";admin=true";
+    extender.update(suffix);
+    let extended = extender.digest().bytes();
+    let mut padded = sha1_pad(plaintext, mac_input_len);
+    padded.extend_from_slice(suffix);
+    assert!(sha1_mac_verify(&SECRET_KEY_DONT_LOOK, &padded, &extended));
 
     Ok(())
 }

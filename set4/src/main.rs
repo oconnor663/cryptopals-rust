@@ -191,6 +191,31 @@ fn sha1_mac_verify(key: &[u8; 16], message: &[u8], mac: &[u8; 20]) -> bool {
     constant_time_eq::constant_time_eq(&expected, mac)
 }
 
+// SHA-1 pads the message to a multiple of 64 bytes. This padding is all zeros,
+// with two additions:
+// - A single 0x80 byte at the end of the message / the beginning of the
+//   padding. (Really a 1-bit, but in practice all messages are complete bytes
+//   rather than uneven bit lengths.)
+// - The 8-byte big-endian *bit* length of the message, at the end of the
+//   padding.
+fn sha1_pad(message: &[u8]) -> Vec<u8> {
+    let mut padded = message.to_vec();
+    padded.push(0x80);
+    let last_block_len = padded.len() % 64;
+    if 64 - last_block_len >= 8 {
+        for _ in 0..64 - last_block_len - 8 {
+            padded.push(0);
+        }
+    } else {
+        for _ in 0..64 - last_block_len + 56 {
+            padded.push(0);
+        }
+    }
+    padded.extend_from_slice(&(message.len() * 8).to_be_bytes());
+    assert_eq!(padded.len() % 64, 0);
+    padded
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
@@ -246,6 +271,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mac = sha1_mac(&key, b"hello world");
     assert!(!sha1_mac_verify(&random_key(), b"hello world", &mac));
     assert!(!sha1_mac_verify(&key, b"WRONG MESSAGE", &mac));
+    // Test length extension.
+    let mut foo_hasher = sha1::Sha1::new();
+    foo_hasher.update(b"foo");
+    let foo_hash = foo_hasher.digest().bytes();
+    let mut foo_extender = sha1::Sha1::from_state_bytes(&foo_hash, 3);
+    foo_extender.update(b"bar");
+    let extended_hash = foo_extender.digest().bytes();
+    let mut total_message = sha1_pad(b"foo");
+    total_message.extend_from_slice(b"bar");
+    let mut total_hasher = sha1::Sha1::new();
+    total_hasher.update(&total_message);
+    let total_hash = total_hasher.digest().bytes();
+    assert_eq!(extended_hash, total_hash);
 
     Ok(())
 }

@@ -117,6 +117,29 @@ impl Sha1 {
         }
     }
 
+    /// Jack's interface for doing length extensions
+    pub fn from_state_bytes(bytes: &[u8; 20], orig_len: u64) -> Sha1 {
+        let mut padded_len = orig_len + 9;
+        if padded_len % 64 != 0 {
+            padded_len += 64 - (padded_len % 64);
+        }
+        assert_eq!(padded_len % 64, 0);
+        let mut state = [0; 5];
+        for (word, chunk) in state.iter_mut().zip(bytes.chunks_exact(4)) {
+            let mut array = [0; 4];
+            array.copy_from_slice(chunk);
+            *word = u32::from_be_bytes(array);
+        }
+        Sha1 {
+            state: Sha1State { state },
+            len: padded_len,
+            blocks: Blocks {
+                len: 0,
+                block: [0; 64],
+            },
+        }
+    }
+
     /// Shortcut to create a sha1 from some bytes.
     ///
     /// This also lets you create a hash from a utf-8 string.  This is equivalent

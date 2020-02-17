@@ -70,9 +70,28 @@ fn edit(ciphertext: &mut [u8], key: &[u8; 16], offset: usize, newtext: &[u8]) {
     ctr_xor_seek(key, slice, offset);
 }
 
+fn encrypt_userdata(data: &[u8]) -> Vec<u8> {
+    assert!(!data.contains(&(';' as u8)));
+    assert!(!data.contains(&('=' as u8)));
+    let mut content = b"comment1=cooking%20MCs;userdata=".to_vec();
+    content.extend_from_slice(data);
+    content.extend_from_slice(b";comment2=%20like%20a%20pound%20of%20bacon");
+    let key = b"secret key!!!!!!";
+    ctr_xor(key, &mut content);
+    content
+}
+
+fn user_is_admin(ciphertext: &[u8]) -> bool {
+    let key = b"secret key!!!!!!";
+    let mut plaintext = ciphertext.to_vec();
+    ctr_xor(key, &mut plaintext);
+    String::from_utf8_lossy(&plaintext)
+        .find(";admin=true;")
+        .is_some()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
-    println!("============ challenge 25 =============");
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
     let mut ciphertext = secret_plaintext.to_vec();
     ctr_xor(&SECRET_KEY_DONT_LOOK, &mut ciphertext);
@@ -86,6 +105,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     xor(&mut ciphertext, &ciphertext_copy);
     assert_eq!(&secret_plaintext[..], &ciphertext[..]);
+
+    // Challenge 26
+    let mut ciphertext = encrypt_userdata(&[]);
+    let known_plaintext =
+        b"comment1=cooking%20MCs;userdata=;comment2=%20like%20a%20pound%20of%20bacon";
+    let target_plaintext =
+        b";admin=true;                                                              ";
+    xor(&mut ciphertext, known_plaintext);
+    xor(&mut ciphertext, target_plaintext);
+    assert!(user_is_admin(&ciphertext));
 
     Ok(())
 }

@@ -3,6 +3,9 @@ use block_cipher_trait::BlockCipher;
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 
+pub mod sha1;
+mod simd;
+
 fn pad(input: &[u8], block_len: usize) -> Vec<u8> {
     let mut out = input.to_vec();
     let padding_bytes = block_len - (input.len() % block_len);
@@ -176,6 +179,18 @@ fn user_is_admin_cbc_key_as_iv(ciphertext: &[u8]) -> Result<bool, NonAsciiError>
         .is_some())
 }
 
+fn sha1_mac(key: &[u8; 16], message: &[u8]) -> [u8; 20] {
+    let mut hasher = sha1::Sha1::new();
+    hasher.update(key);
+    hasher.update(message);
+    hasher.digest().bytes()
+}
+
+fn sha1_mac_verify(key: &[u8; 16], message: &[u8], mac: &[u8; 20]) -> bool {
+    let expected = sha1_mac(key, message);
+    constant_time_eq::constant_time_eq(&expected, mac)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
@@ -221,6 +236,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "the key is: {:?}",
         String::from_utf8_lossy(&error.plaintext[..16])
     );
+
+    // Challenge 28
+    assert_eq!(
+        sha1_mac(&[0; 16], b""),
+        [225, 41, 242, 124, 81, 3, 188, 92, 196, 75, 205, 240, 161, 94, 22, 13, 68, 80, 102, 255]
+    );
+    let key = random_key();
+    let mac = sha1_mac(&key, b"hello world");
+    assert!(!sha1_mac_verify(&random_key(), b"hello world", &mac));
+    assert!(!sha1_mac_verify(&key, b"WRONG MESSAGE", &mac));
 
     Ok(())
 }

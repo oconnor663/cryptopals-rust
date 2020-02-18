@@ -234,6 +234,18 @@ fn md4_pad(message: &[u8], total_len: u64) -> Vec<u8> {
     padded
 }
 
+fn md4_mac(key: &[u8; 16], message: &[u8]) -> [u8; 16] {
+    let mut hasher = md4::Md4::new();
+    hasher.input(key);
+    hasher.input(message);
+    hasher.result().into()
+}
+
+fn md4_mac_verify(key: &[u8; 16], message: &[u8], mac: &[u8; 16]) -> bool {
+    let expected = md4_mac(key, message);
+    constant_time_eq::constant_time_eq(&expected, mac)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
@@ -340,6 +352,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     total_hasher.input(&total_message);
     let total_hash = total_hasher.result();
     assert_eq!(extended_hash, total_hash);
+    // Attack the MAC function.
+    let plaintext =
+        b"comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon";
+    let mac = md4_mac(&SECRET_KEY_DONT_LOOK, plaintext);
+    let mac_input_len = (plaintext.len() + 16) as u64;
+    let mut extender = md4::Md4::from_state_bytes(&mac, mac_input_len);
+    let suffix = b";admin=true";
+    extender.input(suffix);
+    let extended = extender.result().into();
+    let mut padded = md4_pad(plaintext, mac_input_len);
+    padded.extend_from_slice(suffix);
+    assert!(md4_mac_verify(&SECRET_KEY_DONT_LOOK, &padded, &extended));
 
     Ok(())
 }

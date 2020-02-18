@@ -138,6 +138,28 @@ impl Default for Md4State {
 }
 
 impl Md4 {
+    // for Jack's length extension attack
+    pub fn from_state_bytes(bytes: &[u8; 16], orig_len: u64) -> Self {
+        let mut padded_len = orig_len + 9;
+        if padded_len % 64 != 0 {
+            padded_len += 64 - (padded_len % 64);
+        }
+        assert_eq!(padded_len % 64, 0);
+        let mut state = [0; 4];
+        for (word, chunk) in state.iter_mut().zip(bytes.chunks_exact(4)) {
+            let mut array = [0; 4];
+            array.copy_from_slice(chunk);
+            *word = u32::from_le_bytes(array);
+        }
+        Self {
+            state: Md4State {
+                s: u32x4(state[0], state[1], state[2], state[3]),
+            },
+            length_bytes: padded_len,
+            buffer: BlockBuffer::default(),
+        }
+    }
+
     fn finalize(&mut self) {
         let state = &mut self.state;
         let l = (self.length_bytes << 3) as u64;

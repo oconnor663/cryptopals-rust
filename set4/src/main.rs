@@ -1,5 +1,6 @@
 use arrayref::array_ref;
 use block_cipher_trait::BlockCipher;
+use digest::Digest;
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 
@@ -216,6 +217,23 @@ fn sha1_pad(message: &[u8], total_len: u64) -> Vec<u8> {
     padded
 }
 
+fn md4_pad(message: &[u8], total_len: u64) -> Vec<u8> {
+    let mut padded = message.to_vec();
+    padded.push(0x80);
+    let last_block_len = (total_len + 1) % 64;
+    if 64 - last_block_len >= 8 {
+        for _ in 0..64 - last_block_len - 8 {
+            padded.push(0);
+        }
+    } else {
+        for _ in 0..64 - last_block_len + 56 {
+            padded.push(0);
+        }
+    }
+    padded.extend_from_slice(&(total_len * 8).to_le_bytes());
+    padded
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
@@ -300,6 +318,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(sha1_mac_verify(&SECRET_KEY_DONT_LOOK, &padded, &extended));
 
     // Challenge 30
+    // Check the MD4 implementation.
+    let mut reference_hasher = md4::Md4::default();
+    reference_hasher.input(b"abcdefghijklmnopqrstuvwxyz");
+    let reference_hash = reference_hasher.result();
+    assert_eq!(
+        &reference_hash[..],
+        &[215, 158, 28, 48, 138, 165, 187, 205, 238, 168, 237, 99, 223, 65, 45, 169],
+        "test vector works",
+    );
+    // Test length extension.
+    let mut foo_hasher = md4::Md4::default();
+    foo_hasher.input(b"foo");
+    let foo_hash = foo_hasher.result();
+    let mut foo_extender = md4::Md4::from_state_bytes(&foo_hash.into(), 3);
+    foo_extender.input(b"bar");
+    let extended_hash = foo_extender.result();
+    let mut total_message = md4_pad(b"foo", 3);
+    total_message.extend_from_slice(b"bar");
+    let mut total_hasher = md4::Md4::default();
+    total_hasher.input(&total_message);
+    let total_hash = total_hasher.result();
+    assert_eq!(extended_hash, total_hash);
 
     Ok(())
 }

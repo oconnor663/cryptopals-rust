@@ -3,6 +3,7 @@ use block_cipher_trait::BlockCipher;
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 
+pub mod md4;
 pub mod sha1;
 mod simd;
 
@@ -297,6 +298,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut padded = sha1_pad(plaintext, mac_input_len);
     padded.extend_from_slice(suffix);
     assert!(sha1_mac_verify(&SECRET_KEY_DONT_LOOK, &padded, &extended));
+
+    // Challenge 30
 
     Ok(())
 }

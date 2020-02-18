@@ -246,6 +246,54 @@ fn md4_mac_verify(key: &[u8; 16], message: &[u8], mac: &[u8; 16]) -> bool {
     constant_time_eq::constant_time_eq(&expected, mac)
 }
 
+fn verify_sha1_mac_sleepy(plaintext: &[u8], mac: &[u8; 20]) -> bool {
+    let expected_mac = sha1_mac(&SECRET_KEY_DONT_LOOK, &plaintext);
+    for (expected, found) in expected_mac.iter().copied().zip(mac.iter().copied()) {
+        if expected != found {
+            return false;
+        } else {
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
+    }
+    return true;
+}
+
+// this is slow, so we comment out the call
+fn _challenge_31() {
+    let text = b"some text I want to MAC";
+    let mut mac = [0; 20];
+    assert!(!verify_sha1_mac_sleepy(text, &mac));
+    for i in 0..mac.len() {
+        dbg!(i);
+        let mut max_time = 0;
+        let mut best_candidate = 0;
+        for candidate in 0..=255 {
+            const RUNS: usize = 3;
+            // Take the minimum of a few runs. This is basically Challenge 32.
+            let mut runs = [0; RUNS];
+            for run in &mut runs {
+                let start = std::time::Instant::now();
+                mac[i] = candidate;
+                verify_sha1_mac_sleepy(text, &mac);
+                let end = std::time::Instant::now();
+                let time = (end - start).as_nanos();
+                *run = time;
+            }
+            let best_run = runs.iter().copied().min().unwrap();
+            if best_run > max_time {
+                max_time = best_run;
+                best_candidate = candidate;
+            }
+        }
+        dbg!(max_time);
+        mac[i] = best_candidate;
+    }
+    eprintln!("got:  {:?}", &mac[..]);
+    eprintln!("need: {:?}", &sha1_mac(&SECRET_KEY_DONT_LOOK, text));
+    assert!(dbg!(verify_sha1_mac_sleepy(text, &mac)));
+    eprintln!("challenge 31 success");
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Challenge 25
     let secret_plaintext = b"some really secret stuff omgomg I hope this doesn't get out";
@@ -364,6 +412,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut padded = md4_pad(plaintext, mac_input_len);
     padded.extend_from_slice(suffix);
     assert!(md4_mac_verify(&SECRET_KEY_DONT_LOOK, &padded, &extended));
+
+    // Challenge 31
+    _challenge_31();
 
     Ok(())
 }

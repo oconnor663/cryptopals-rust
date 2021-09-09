@@ -1,5 +1,5 @@
 use arrayref::array_ref;
-use block_cipher_trait::BlockCipher;
+use cipher::{BlockDecrypt, NewBlockCipher};
 use std::str::from_utf8;
 
 fn xor(buf: &mut [u8], mask: &[u8]) {

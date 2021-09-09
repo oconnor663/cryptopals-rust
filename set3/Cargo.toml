@@ -8,9 +8,9 @@ edition = "2018"
 opt-level = 3
 
 [dependencies]
-aesni = { version = "0.6.0", features = ["nocheck"] }
+aes = "0.7.5"
 arrayref = "0.3.6"
-block-cipher-trait = "0.6.2"
 base64 = "0.11.0"
+cipher = "0.3.0"
 rand = "0.7.3"
 once_cell = "1.3.1"

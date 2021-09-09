@@ -1,5 +1,5 @@
 use arrayref::array_ref;
-use block_cipher_trait::BlockCipher;
+use cipher::{BlockDecrypt, BlockEncrypt, NewBlockCipher};
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng, RngCore};
 use std::convert::TryInto;
@@ -45,7 +45,7 @@ fn unpad(input: &[u8]) -> Result<Vec<u8>, PaddingError> {
 fn aes128_encrypt_block(key: &[u8; 16], block: &mut [u8]) {
     assert_eq!(block.len(), 16);
     let mut block_array = (*array_ref!(block, 0, 16)).into();
-    let cipher = aesni::Aes128::new(&((*key).into()));
+    let cipher = aes::Aes128::new(&((*key).into()));
     cipher.encrypt_block(&mut block_array);
     block.copy_from_slice(&block_array);
 }
@@ -53,7 +53,7 @@ fn aes128_encrypt_block(key: &[u8; 16], block: &mut [u8]) {
 fn aes128_decrypt_block(key: &[u8; 16], block: &mut [u8]) {
     assert_eq!(block.len(), 16);
     let mut block_array = (*array_ref!(block, 0, 16)).into();
-    let cipher = aesni::Aes128::new(&((*key).into()));
+    let cipher = aes::Aes128::new(&((*key).into()));
     cipher.decrypt_block(&mut block_array);
     block.copy_from_slice(&block_array);
 }
